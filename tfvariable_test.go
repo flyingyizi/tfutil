@@ -2,7 +2,6 @@ package tfutil
 
 import (
 	"fmt"
-	//"reflect"
 	"testing"
 
 	tf "github.com/tensorflow/tensorflow/tensorflow/go"
@@ -93,7 +92,7 @@ func TestVariable(t *testing.T) {
 		op.Const(root.SubScope("input"), []int32{2, 2}),
 		op.Const(root.SubScope("input"), [][]int32{{1, 2, 3}, {4, 5, 6}}),
 	}
-
+op.OneHot
 	var vars = make([]*Variable, 0)
 	for i, j := range testdata {
 		v := NewVariable(root, &j, fmt.Sprintf("init_%d", i))
@@ -196,4 +195,78 @@ func TestTruncatedNormal(t *testing.T) {
 			fmt.Println("	", i, " value:", j.Value())
 		}
 	}
+}
+
+func TestVariable_Get(t *testing.T) {
+
+	var (
+		root = op.NewScope()
+	)
+
+	a := op.Const(root.SubScope("input"), [][]int32{{2, 2}, {2, 2}})
+	b := op.Const(root.SubScope("input"), [][]int32{{3, 3}, {3, 3}})
+
+	aa := NewVariable(root, &a, "aa")
+	bb := NewVariable(root, &b, "bb")
+	fmt.Println(aa.Handle().Op.Name(), bb.Handle().Op.Name())
+
+	A := op.Placeholder(root.SubScope("input"), tf.Int32 /*, op.PlaceholderShape(tf.MakeShape(2, 2))*/)
+	B := op.Placeholder(root.SubScope("input"), tf.Int32 /* , op.PlaceholderShape(tf.MakeShape(2, 1)) */)
+	product1 := op.MatMul(root, A, B)
+
+	graph, err := root.Finalize()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sess, err := tf.NewSession(graph, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sess.Close()
+
+	if aa.Init(sess) && bb.Init(sess) {
+		fmt.Println(aa.Get(sess).Value(), bb.Get(sess).Value())
+	}
+
+	fmt.Println("values:")
+	if output, err := sess.Run(nil, []tf.Output{a, b}, nil); err != nil {
+		panic(err)
+	} else {
+		for i, j := range output {
+			fmt.Println("	", i, " value:", j.Value())
+		}
+	}
+	fmt.Println("matual values:")
+
+	if output, err := sess.Run(
+		map[tf.Output]*tf.Tensor{
+			A: aa.Get(sess),
+			B: bb.Get(sess),
+		}, []tf.Output{product1}, nil); err != nil {
+		panic(err)
+	} else {
+		for i, j := range output {
+			fmt.Println("	", i, " value:", j.Value())
+		}
+	}
+
+	// type args struct {
+	// 	sess *tf.Session
+	// }
+	// tests := []struct {
+	// 	name string
+	// 	v    *Variable
+	// 	args args
+	// 	want tf.Output
+	// }{
+	// 	// TODO: Add test cases.
+	// }
+	// for _, tt := range tests {
+	// 	t.Run(tt.name, func(t *testing.T) {
+	// 		if got := tt.v.Handle(tt.args.sess); !reflect.DeepEqual(got, tt.want) {
+	// 			t.Errorf("Variable.Handle() = %v, want %v", got, tt.want)
+	// 		}
+	// 	})
+	// }
 }

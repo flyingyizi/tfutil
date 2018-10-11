@@ -20,19 +20,19 @@ type Variable struct {
 	isInit bool
 }
 
-func NewVariable(root *op.Scope, value *tf.Output, name string) (output *Variable) {
+func NewVariable(root *op.Scope, initValue *tf.Output, name string) (output *Variable) {
 	s := root.SubScope("Variable")
-	dtype := value.DataType()
-	handle := op.VarHandleOp(s, dtype, value.Shape(), op.VarHandleOpSharedName(name))
+	dtype := initValue.DataType()
+	handle := op.VarHandleOp(s, dtype, initValue.Shape(), op.VarHandleOpSharedName(name))
 
-	init := op.AssignVariableOp(s, handle, *value)
+	init := op.AssignVariableOp(s, handle, *initValue)
 	r := op.ReadVariableOp(s, handle, dtype)
 
 	x := Variable{
 		name:    name,
 		scope:   s,
 		dtype:   dtype,
-		initVal: value,
+		initVal: initValue,
 		vHandle: &handle,
 
 		initHandle: init,
@@ -54,7 +54,10 @@ func (v *Variable) Init(sess *tf.Session) bool {
 	}
 }
 
-func (v *Variable) Get(sess *tf.Session) interface{} {
+func (v *Variable) Handle() tf.Output {
+	return *v.vHandle
+}
+func (v *Variable) Get(sess *tf.Session) *tf.Tensor {
 	if v.isInit == false {
 		return nil
 	}
@@ -62,6 +65,6 @@ func (v *Variable) Get(sess *tf.Session) interface{} {
 	if out, err := sess.Run(nil, []tf.Output{v.readHandle}, nil); err != nil {
 		return nil
 	} else {
-		return out[0].Value()
+		return out[0]
 	}
 }
