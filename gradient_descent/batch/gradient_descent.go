@@ -1,6 +1,8 @@
 package batch
 
 import (
+	"fmt"
+
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -20,20 +22,32 @@ func mainm() {
 
 }
 
+// computeCost compute cost for [X,y]
+// X shape is r x c, thea shape is 1 x c, y shape is r x 1
+// the algorithm is same as below python function
 // ```python
 // def computeCost(X, y, theta):
 //     inner = np.power(((X * theta.T) - y), 2)
 //     return np.sum(inner) / (2 * len(X))
 // ```
 func computeCost(X, y, theta *mat.Dense) float64 {
-	var _error, inner mat.Dense
-	r, _ := X.Dims()
+	xr, xc := X.Dims()
+	yr, yc := y.Dims()
+	tr, tc := theta.Dims()
 
-	_error.MulElem(X, theta.T())
+	if xr != yr || xc != tc || tr != 1 || yc != 1 {
+		panic(mat.ErrShape)
+	}
+
+	var _error /*, inner */ mat.Dense
+
+	_error.Mul(X, theta.T())
 	_error.Sub(&_error, y)
-	inner.MulElem(&_error, &_error)
 
-	return Sum(&inner) / (2 * float64(r))
+	v := _error.ColView(0)
+	sum := mat.Dot(v, v)
+	sum = sum / (2 * float64(v.Len()))
+	return sum
 }
 
 // ```python
@@ -54,21 +68,28 @@ func computeCost(X, y, theta *mat.Dense) float64 {
 
 //     return theta, cost
 // ```
-func gradientDescent(X, y, theta *mat.Dense, alpha float64, inters int) (otheta *mat.Dense, cost []float64) {
-	var _error, term mat.Dense
 
-	r, c := theta.Dims()
-	temp := mat.NewDense(r, c, nil)
+// X shape is r x c, theta shape is 1 x c, y shape is r x 1
+
+func gradientDescent(X, y, theta *mat.Dense, alpha float64, inters int) (otheta *mat.Dense, cost []float64) {
+	var _error /* , term */ mat.Dense
+
+	tr, tc := theta.Dims()
+	temp := mat.NewDense(tr, tc, nil)
 	_, parameters := theta.Dims()
 	cost = make([]float64, inters)
 
 	for i := 0; i < inters; i++ {
-		_error.MulElem(X, theta.T())
+		_error.Mul(X, theta.T()) //_error shape will be r x 1
 		_error.Sub(&_error, y)
 
 		for j := 0; j < parameters; j++ {
-			term.Mul(&_error, X.ColView(j).T())
-			temp.Set(0, j, theta.At(0, j)-((float64(alpha)/float64(r))*Sum(&term)))
+			v := _error.ColView(0)
+			sum := mat.Dot(v, v)
+			sum = sum / (float64(v.Len()))
+			temp.Set(0, j, theta.At(0, j)-(float64(alpha)*sum))
+
+			fmt.Println("sum:", sum)
 		}
 
 		theta = temp

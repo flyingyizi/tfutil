@@ -17,7 +17,9 @@ func Test_computeCost(t *testing.T) {
 	}
 	X := mat.NewDense(r, c, data)
 	y := mat.NewDense(r, 1, Yd)
-	theta := mat.NewDense(1, r, nil)
+	theta := mat.NewDense(1, c, nil)
+
+	// X shape is r x c, thea shape is 1 x c, y shape is r x 1
 
 	cost := computeCost(X, y, theta)
 	fmt.Println(cost)
@@ -53,10 +55,14 @@ func Test_gradientDescent(t *testing.T) {
 	}
 	X := mat.NewDense(r, c, data)
 	y := mat.NewDense(r, 1, Yd)
-	theta := mat.NewDense(1, r, nil)
+	theta := mat.NewDense(1, c, nil)
 
-	k, l := gradientDescent(X, y, theta, 0.01, 1000 /* alpha float64, inters int */)
-	fmt.Println(k, l)
+	// X shape is r x c, theta shape is 1 x c, y shape is r x 1
+	k, _ := gradientDescent(X, y, theta, 0.01, 11 /* alpha float64, inters int */)
+	fk := mat.Formatted(k, mat.Prefix("    "), mat.Squeeze())
+	//fl := mat.Formatted(l, mat.Prefix("    "), mat.Squeeze())
+	fmt.Println(fk)
+	//	fmt.Println(l)
 
 	// type args struct {
 	// 	X      *mat.Dense
