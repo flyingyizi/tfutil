@@ -1,6 +1,7 @@
 package batch
 
 import (
+	//	"gonum.org/v1/gonum/stat"
 	"reflect"
 	"testing"
 
@@ -38,13 +39,12 @@ func Test_computeCost(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := computeCost(tt.args.X, tt.args.y, tt.args.theta); got != tt.want {
-				t.Errorf("computeCost() = %v, want %v", got, tt.want)
+			if got := ComputeCost(tt.args.X, tt.args.y, tt.args.theta); got != tt.want {
+				t.Errorf("ComputeCost() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
-
 func Test_gradientDescent(t *testing.T) {
 	Xd, Yd := loadData("ex1data1.txt")
 
@@ -58,7 +58,7 @@ func Test_gradientDescent(t *testing.T) {
 	y1 := mat.NewVecDense(r, Yd)
 	theta1 := mat.NewVecDense(c, nil)
 
-	//k, _ := gradientDescent(X, y, theta, 0.01, 1000 /* alpha float64, inters int */)
+	//k, _ := GradientDescent(X, y, theta, 0.01, 1000 /* alpha float64, inters int */)
 	//fk := mat.Formatted(k, mat.Prefix("    "), mat.Squeeze())
 	//fmt.Println(fk)
 
@@ -72,28 +72,26 @@ func Test_gradientDescent(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		wantOtheta *mat.VecDense
+		wantOtheta []float64
 		wantCost   float64
 	}{
 		// TODO: Add test cases.
 		{
 			name:       "test1",
 			args:       args{X: X1, y: y1, theta: theta1, alpha: 0.01, inters: 1000},
-			wantOtheta: mat.NewVecDense(2, []float64{-3.2414021442744225, 1.1272942024281842}),
+			wantOtheta: []float64{-3.2414021442744225, 1.1272942024281842},
 			wantCost:   4.515955503078913,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotOtheta, gotCost := gradientDescent(tt.args.X, tt.args.y, tt.args.theta, tt.args.alpha, tt.args.inters)
+			gotOtheta, gotCost := GradientDescent(tt.args.X, tt.args.y, tt.args.theta, tt.args.alpha, tt.args.inters)
 			if !reflect.DeepEqual(gotOtheta, tt.wantOtheta) {
-				t.Errorf("gradientDescent() gotOtheta = %v, want %v", gotOtheta, tt.wantOtheta)
-			} else if got := computeCost(tt.args.X, tt.args.y, gotOtheta); got != tt.wantCost {
-				t.Errorf("computeCost() = %v, want %v", got, tt.wantCost)
+				t.Errorf("GradientDescent() gotOtheta = %v, want %v", gotOtheta, tt.wantOtheta)
 			}
 
 			if !reflect.DeepEqual(gotCost, tt.wantCost) {
-				//	t.Errorf("gradientDescent() gotCost = %v, want %v", gotCost, tt.wantCost)
+				//	t.Errorf("GradientDescent() gotCost = %v, want %v", gotCost, tt.wantCost)
 			}
 		})
 	}

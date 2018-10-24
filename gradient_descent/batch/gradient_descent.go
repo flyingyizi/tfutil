@@ -16,11 +16,11 @@ func mainm() {
 	y := mat.NewVecDense(r, Yd)
 	theta := mat.NewVecDense(r, nil)
 
-	gradientDescent(X, y, theta, 0.01 /* alpha */, 1000 /*  inters int */)
+	GradientDescent(X, y, theta, 0.01 /* alpha */, 1000 /*  inters int */)
 
 }
 
-// computeCost compute cost for [X,y]
+// ComputeCost compute cost for [X,y]
 // X shape is r x c, thea shape is c x 1, y shape is r x 1
 // the algorithm is same as below python function
 // ```python
@@ -28,7 +28,7 @@ func mainm() {
 //     inner = np.power(((X * theta.T) - y), 2)
 //     return np.sum(inner) / (2 * len(X))
 // ```
-func computeCost(X *mat.Dense, y, theta *mat.VecDense) float64 {
+func ComputeCost(X *mat.Dense, y, theta *mat.VecDense) float64 {
 	xr, xc := X.Dims()
 	yr, yc := y.Dims()
 	tr := theta.Len()
@@ -62,14 +62,14 @@ func computeCost(X *mat.Dense, y, theta *mat.VecDense) float64 {
 //             temp[0,j] = theta[0,j] - ((alpha / len(X)) * np.sum(term))
 
 //         theta = temp
-//         cost[i] = computeCost(X, y, theta)
+//         cost[i] = ComputeCost(X, y, theta)
 
 //     return theta, cost
 // ```
 
 // X shape is r x c, theta shape is c x 1, y shape is r x 1
 
-func gradientDescent(X *mat.Dense, y, theta *mat.VecDense, alpha float64, inters int) (otheta *mat.VecDense, cost []float64) {
+func GradientDescent(X *mat.Dense, y, theta *mat.VecDense, alpha float64, inters int) (otheta, cost []float64) {
 	var _error /* , term */ mat.Dense
 
 	xr, xc := X.Dims()
@@ -95,23 +95,27 @@ func gradientDescent(X *mat.Dense, y, theta *mat.VecDense, alpha float64, inters
 		}
 
 		theta = temp
-		cost[i] = computeCost(X, y, theta)
+		cost[i] = ComputeCost(X, y, theta)
 	}
 
-	return theta, cost
-}
-
-func Sum(m *mat.Dense) float64 {
-	r, c := m.Dims()
-
-	var sum float64
-	for i := 0; i < r; i++ {
-		for j := 0; j < c; j++ {
-			sum = sum + m.At(i, j)
-		}
+	otheta = make([]float64, theta.Len())
+	for i := 0; i < theta.Len(); i++ {
+		otheta[i] = theta.AtVec(i)
 	}
-	return sum
+	return otheta, cost
 }
+
+// func Sum(m *mat.Dense) float64 {
+// 	r, c := m.Dims()
+
+// 	var sum float64
+// 	for i := 0; i < r; i++ {
+// 		for j := 0; j < c; j++ {
+// 			sum = sum + m.At(i, j)
+// 		}
+// 	}
+// 	return sum
+// }
 
 // func shuffle(X [][]float64, rnd func(n int) int) [][]float64 {
 
