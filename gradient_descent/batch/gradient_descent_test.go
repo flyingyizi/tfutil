@@ -2,6 +2,7 @@ package batch
 
 import (
 	//	"gonum.org/v1/gonum/stat"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -95,4 +96,22 @@ func Test_gradientDescent(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_gradientDescent1(t *testing.T) {
+	Xd, Yd := loadData("ex1data2.txt")
+
+	data := []float64{}
+	for _, j := range Xd {
+		data = append(data, 1)
+		data = append(data, j...)
+	}
+	r, c := len(Xd), len(Xd[0])+1
+	X1 := mat.NewDense(r, c, data)
+	y1 := mat.NewVecDense(r, Yd)
+	theta1 := mat.NewVecDense(c, nil)
+
+	k, _ := GradientDescent(X1, y1, theta1, 0.01, 1000 /* alpha float64, inters int */)
+	//fk := mat.Formatted(k, mat.Prefix("    "), mat.Squeeze())
+	fmt.Println(r, c, k)
 }

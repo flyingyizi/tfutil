@@ -1,7 +1,6 @@
 package batch
 
 import (
-	"errors"
 	"image/color"
 	"math"
 	"os"
@@ -38,18 +37,48 @@ func ExampleGradientDescent_ex1data1() {
 	// Output:
 }
 
+func ExampleGradientDescent_ex1data2() {
+
+	Xd, Yd := loadData("ex1data2.txt")
+
+	data := []float64{} // 为后面向量化计算，会在其中增加 `x^0` 即等于1的一列数据
+	x1 := []float64{}   // 存放图形显示原始数据
+	for _, j := range Xd {
+		data = append(data, 1)
+		data = append(data, j...)
+
+		x1 = append(x1, j...)
+	}
+	r, c := len(Xd), len(Xd[0])+1
+	X1 := mat.NewDense(r, c, data)
+	y1 := mat.NewVecDense(r, Yd)
+	theta1 := mat.NewVecDense(c, nil)
+
+	t, cost := GradientDescent(X1, y1, theta1, 0.01, 1000)
+
+	showToImage(x1, Yd, cost, "ex1data2_gradientDescent", t...)
+
+	// Output:
+}
+
 func showToImage(x, y []float64,
 	cost []float64,
 	filename string, thetas ...float64) {
 
+	showScatter := true
 	//prepare scatter
 	if len(x) != len(y) {
-		panic(errors.New("wrong shape size"))
+		showScatter = false
+		//panic(errors.New("wrong shape size"))
 	}
-	scatterData := make(plotter.XYs, len(x))
-	for i := range scatterData {
-		scatterData[i].X = x[i]
-		scatterData[i].Y = y[i]
+
+	var scatterData plotter.XYs
+	if showScatter == true {
+		scatterData := make(plotter.XYs, len(x))
+		for i := range scatterData {
+			scatterData[i].X = x[i]
+			scatterData[i].Y = y[i]
+		}
 	}
 	costData := make(plotter.XYs, len(cost))
 	for i := range costData {
