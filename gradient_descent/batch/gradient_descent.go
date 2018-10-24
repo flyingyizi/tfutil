@@ -49,6 +49,7 @@ func ComputeCost(X *mat.Dense, y, theta *mat.VecDense) float64 {
 }
 
 // ```python
+// # https://github.com/fengdu78/Coursera-ML-AndrewNg-Notes
 // def gradientDescent(X, y, theta, alpha, iters):
 //     temp = np.matrix(np.zeros(theta.shape))
 //     parameters = int(theta.ravel().shape[1])
