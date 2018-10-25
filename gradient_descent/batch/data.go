@@ -6,7 +6,83 @@ import (
 	"io"
 	"os"
 	"strconv"
+
+	"gonum.org/v1/gonum/floats"
+	"gonum.org/v1/gonum/stat"
+
+	"gonum.org/v1/gonum/mat"
 )
+
+// CsvToDense, the last row is the Y value
+func CsvToDense(filename string) (X *mat.Dense) {
+	file, err := os.Open(filename)
+
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+
+	reader.Comment = '#' //可以设置读入文件中的注释符
+	reader.Comma = ','   //默认是逗号，也可以自己设置
+
+	firstRecord, err := reader.Read()
+	if err == io.EOF {
+		return
+	} else if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	cols := len(firstRecord)
+	data := make(map[int][]float64)
+
+	for i := 0; i < cols; i++ {
+		data[i] = make([]float64, 0)
+
+		if value, err := strconv.ParseFloat(firstRecord[i], 64); err == nil {
+			data[i] = append(data[i], value)
+		} else {
+			return
+		}
+	}
+
+	row := 1
+	for {
+		// continue scan
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+		for i, j := range record {
+			if value, err := strconv.ParseFloat(j, 64); err == nil {
+				data[i] = append(data[i], value)
+			} else {
+				return
+			}
+		}
+		row++
+	}
+
+	for i := 0; i < cols; i++ {
+		m := stat.Mean(data[i], nil)
+		s := stat.StdDev(data[i], nil)
+		floats.AddConst(-1*m, data[i])
+		floats.Scale(1/s, data[i])
+	}
+
+	X = mat.NewDense(row, cols, nil)
+	for i := 0; i < cols; i++ {
+		X.SetCol(i, data[i])
+	}
+
+	return
+
+}
 
 func loadData(filename string) (outx [][]float64, outy []float64) {
 
