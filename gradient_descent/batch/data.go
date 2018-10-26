@@ -13,8 +13,9 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-// CsvToDense, the last row is the Y value
-func CsvToDense(filename string) (X *mat.Dense) {
+// CsvToDense,
+// 注意csv文件中的列数据在输出时以行存储，因此在矩阵运算时需要T()后再参与运算
+func CsvToDense(filename string) (X *mat.Dense, orign [][]float64) {
 	file, err := os.Open(filename)
 
 	if err != nil {
@@ -36,19 +37,19 @@ func CsvToDense(filename string) (X *mat.Dense) {
 		return
 	}
 	cols := len(firstRecord)
-	data := make(map[int][]float64)
+	data := make([][]float64, cols+1)
 
+	row := 0
 	for i := 0; i < cols; i++ {
-		data[i] = make([]float64, 0)
-
+		data[i+1] = make([]float64, 0)
 		if value, err := strconv.ParseFloat(firstRecord[i], 64); err == nil {
-			data[i] = append(data[i], value)
+			data[i+1] = append(data[i+1], value)
 		} else {
 			return
 		}
 	}
+	row++
 
-	row := 1
 	for {
 		// continue scan
 		record, err := reader.Read()
@@ -60,7 +61,7 @@ func CsvToDense(filename string) (X *mat.Dense) {
 		}
 		for i, j := range record {
 			if value, err := strconv.ParseFloat(j, 64); err == nil {
-				data[i] = append(data[i], value)
+				data[i+1] = append(data[i+1], value)
 			} else {
 				return
 			}
@@ -68,16 +69,28 @@ func CsvToDense(filename string) (X *mat.Dense) {
 		row++
 	}
 
-	for i := 0; i < cols; i++ {
+	data[0] = make([]float64, row)
+	for i := 0; i < row; i++ {
+		data[0][i] = 1
+	}
+
+	//assign orig data
+	orign = make([][]float64, cols+1)
+	for i := 0; i < cols+1; i++ {
+		orign[i] = make([]float64, row)
+		copy(orign[i], data[i])
+	}
+
+	for i := 0; i < cols+1; i++ {
 		m := stat.Mean(data[i], nil)
 		s := stat.StdDev(data[i], nil)
 		floats.AddConst(-1*m, data[i])
 		floats.Scale(1/s, data[i])
 	}
 
-	X = mat.NewDense(row, cols, nil)
-	for i := 0; i < cols; i++ {
-		X.SetCol(i, data[i])
+	X = mat.NewDense(cols+1, row, nil)
+	for i := 0; i < cols+1; i++ {
+		X.SetRow(i, data[i])
 	}
 
 	return
