@@ -1,67 +1,24 @@
 package batch
 
 import (
-	//	"gonum.org/v1/gonum/stat"
-	"fmt"
 	"reflect"
 	"testing"
 
 	"gonum.org/v1/gonum/mat"
 )
 
-func Test_computeCost(t *testing.T) {
-	Xd, Yd := loadData("ex1data1.txt")
+//	"gonum.org/v1/gonum/stat"
 
-	r, c := len(Xd), len(Xd[0])
-	data := []float64{}
-	for _, j := range Xd {
-		data = append(data, j...)
-	}
-	X1 := mat.NewDense(r, c, data)
-	y1 := mat.NewVecDense(r, Yd)
-	theta1 := mat.NewVecDense(c, nil)
-
-	type args struct {
-		X     *mat.Dense
-		y     *mat.VecDense
-		theta *mat.VecDense
-	}
-	tests := []struct {
-		name string
-		args args
-		want float64
-	}{
-		// TODO: Add test cases.
-		{
-			name: "test1",
-			args: args{X: X1, y: y1, theta: theta1},
-			want: 32.072733877455676,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := ComputeCost(tt.args.X, tt.args.y, tt.args.theta); got != tt.want {
-				t.Errorf("ComputeCost() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 func Test_gradientDescent(t *testing.T) {
-	Xd, Yd := loadData("ex1data1.txt")
 
-	data := []float64{}
-	for _, j := range Xd {
-		data = append(data, 1)
-		data = append(data, j...)
-	}
-	r, c := len(Xd), len(Xd[0])+1
-	X1 := mat.NewDense(r, c, data)
-	y1 := mat.NewVecDense(r, Yd)
-	theta1 := mat.NewVecDense(c, nil)
+	X, Y, _ := CsvToDense("ex1data2.txt", true)
 
-	//k, _ := GradientDescent(X, y, theta, 0.01, 1000 /* alpha float64, inters int */)
-	//fk := mat.Formatted(k, mat.Prefix("    "), mat.Squeeze())
-	//fmt.Println(fk)
+	_, rc := X.Dims()
+	theta1 := mat.NewVecDense(rc, nil)
+
+	// 	//k, _ := GradientDescent(X, y, theta, 0.01, 1000 /* alpha float64, inters int */)
+	// 	//fk := mat.Formatted(k, mat.Prefix("    "), mat.Squeeze())
+	// 	//fmt.Println(fk)
 
 	type args struct {
 		X      *mat.Dense
@@ -79,9 +36,9 @@ func Test_gradientDescent(t *testing.T) {
 		// TODO: Add test cases.
 		{
 			name:       "test1",
-			args:       args{X: X1, y: y1, theta: theta1, alpha: 0.01, inters: 1000},
-			wantOtheta: []float64{-3.2414021442744225, 1.1272942024281842},
-			wantCost:   4.515955503078913,
+			args:       args{X: X, y: Y, theta: theta1, alpha: 0.01, inters: 1000},
+			wantOtheta: []float64{-1.0199878766662607e-16, 0.8785036522230538, -0.04691665703805384},
+			//wantCost:   0.13070336960771892,
 		},
 	}
 	for _, tt := range tests {
@@ -92,26 +49,8 @@ func Test_gradientDescent(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(gotCost, tt.wantCost) {
-				//	t.Errorf("GradientDescent() gotCost = %v, want %v", gotCost, tt.wantCost)
+				//t.Errorf("GradientDescent() gotCost = %v, want %v", gotCost, tt.wantCost)
 			}
 		})
 	}
-}
-
-func Test_gradientDescent1(t *testing.T) {
-	Xd, Yd := loadData("ex1data2.txt")
-
-	data := []float64{}
-	for _, j := range Xd {
-		data = append(data, 1)
-		data = append(data, j...)
-	}
-	r, c := len(Xd), len(Xd[0])+1
-	X1 := mat.NewDense(r, c, data)
-	y1 := mat.NewVecDense(r, Yd)
-	theta1 := mat.NewVecDense(c, nil)
-
-	k, _ := GradientDescent(X1, y1, theta1, 0.01, 1000 /* alpha float64, inters int */)
-	//fk := mat.Formatted(k, mat.Prefix("    "), mat.Squeeze())
-	fmt.Println(r, c, k)
 }

@@ -4,22 +4,6 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-func mainm() {
-	Xd, Yd := loadData("ex1data1.txt")
-
-	r, c := len(Xd), len(Xd[0])
-	data := []float64{}
-	for _, j := range Xd {
-		data = append(data, j...)
-	}
-	X := mat.NewDense(r, c, data)
-	y := mat.NewVecDense(r, Yd)
-	theta := mat.NewVecDense(r, nil)
-
-	GradientDescent(X, y, theta, 0.01 /* alpha */, 1000 /*  inters int */)
-
-}
-
 // ComputeCost compute cost for [X,y]
 // X shape is r x c, thea shape is c x 1, y shape is r x 1
 // the algorithm is same as below python function
@@ -28,7 +12,7 @@ func mainm() {
 //     inner = np.power(((X * theta.T) - y), 2)
 //     return np.sum(inner) / (2 * len(X))
 // ```
-func ComputeCost(X *mat.Dense, y, theta *mat.VecDense) float64 {
+func ComputeCost(X *mat.Dense, y, theta mat.Vector) float64 {
 	xr, xc := X.Dims()
 	yr, yc := y.Dims()
 	tr := theta.Len()
@@ -37,14 +21,13 @@ func ComputeCost(X *mat.Dense, y, theta *mat.VecDense) float64 {
 		panic(mat.ErrShape)
 	}
 
-	var _error /*, inner */ mat.Dense
+	var _error /*, inner */ mat.VecDense
 
-	_error.Mul(X, theta)
-	_error.Sub(&_error, y)
+	_error.MulVec(X, theta)
+	_error.SubVec(&_error, y)
 
-	v := _error.ColView(0)
-	sum := mat.Dot(v, v)
-	sum = sum / (2 * float64(v.Len()))
+	sum := mat.Dot(&_error, &_error)
+	sum = sum / (2 * float64(_error.Len()))
 	return sum
 }
 
@@ -69,9 +52,9 @@ func ComputeCost(X *mat.Dense, y, theta *mat.VecDense) float64 {
 // ```
 
 // X shape is r x c, theta shape is c x 1, y shape is r x 1
-
-func GradientDescent(X *mat.Dense, y, theta *mat.VecDense, alpha float64, inters int) (otheta, cost []float64) {
-	var _error /* , term */ mat.Dense
+// GradientDescent
+func GradientDescent(X *mat.Dense, y, theta mat.Vector, alpha float64, inters int) (otheta, cost []float64) {
+	var _error /* , term */ mat.VecDense
 
 	xr, xc := X.Dims()
 	yr, _ := y.Dims()
@@ -85,12 +68,12 @@ func GradientDescent(X *mat.Dense, y, theta *mat.VecDense, alpha float64, inters
 	cost = make([]float64, inters)
 
 	for i := 0; i < inters; i++ {
-		_error.Mul(X, theta)
-		_error.Sub(&_error, y)
+		_error.MulVec(X, theta)
+		_error.SubVec(&_error, y)
 
 		temp := mat.NewVecDense(tr, nil)
 		for j := 0; j < parameters; j++ {
-			sum := mat.Dot(_error.ColView(0), X.ColView(j))
+			sum := mat.Dot(&_error, X.ColView(j))
 			sum = (float64(alpha) / float64(xr)) * sum
 			temp.SetVec(j, theta.AtVec(j)-sum)
 		}

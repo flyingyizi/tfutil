@@ -92,7 +92,6 @@ func TestVariable(t *testing.T) {
 		op.Const(root.SubScope("input"), []int32{2, 2}),
 		op.Const(root.SubScope("input"), [][]int32{{1, 2, 3}, {4, 5, 6}}),
 	}
-op.OneHot
 	var vars = make([]*Variable, 0)
 	for i, j := range testdata {
 		v := NewVariable(root, &j, fmt.Sprintf("init_%d", i))
