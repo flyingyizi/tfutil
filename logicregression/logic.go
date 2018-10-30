@@ -1,18 +1,29 @@
-package batch
+package logicregression
 
 import (
+	"math"
+
+	"gonum.org/v1/gonum/floats"
+
 	"gonum.org/v1/gonum/mat"
 )
 
-// ComputeCost compute cost for [X,y]
-// X shape is r x c, thea shape is c x 1, y shape is r x 1
-// the algorithm is same as below python function
-// ```python
-// def computeCost(X, y, theta):
-//     inner = np.power(((X * theta.T) - y), 2)
-//     return np.sum(inner) / (2 * len(X))
-// ```
-func ComputeCost(X *mat.Dense, y, theta mat.Vector) float64 {
+// def sigmoid(z):
+// 	return 1 / (1 + np.exp(-z))
+
+func sigmoid(z float64) float64 {
+	return 1 / (1 + math.Exp(-z))
+}
+
+// def cost(theta, X, y):
+//     theta = np.matrix(theta)
+//     X = np.matrix(X)
+//     y = np.matrix(y)
+//     first = np.multiply(-y, np.log(sigmoid(X * theta.T)))
+//     second = np.multiply((1 - y), np.log(1 - sigmoid(X * theta.T)))
+//     return np.sum(first - second) / (len(X))
+
+func ComputeCost(X *mat.Dense, y *mat.VecDense, theta mat.Vector) float64 {
 	xr, xc := X.Dims()
 	yr, yc := y.Dims()
 	tr := theta.Len()
@@ -21,14 +32,33 @@ func ComputeCost(X *mat.Dense, y, theta mat.Vector) float64 {
 		panic(mat.ErrShape)
 	}
 
-	var _error /*, inner */ mat.VecDense
+	var xtheta mat.VecDense
+	xtheta.MulVec(X, theta)
+	array, t1, t2 := make([]float64, xtheta.Len()), make([]float64, xtheta.Len()), make([]float64, xtheta.Len())
+	copy(array, xtheta.RawVector().Data)
+	for i := 0; i < xr; i++ {
+		array[i] = math.Log(sigmoid(xtheta.AtVec(i)))
+	}
+	floats.MulTo(t1, y.RawVector().Data, array)
+	floats.Scale(-1, t1)
 
-	_error.MulVec(X, theta)
-	_error.SubVec(&_error, y)
+	//calc second
+	for i := 0; i < xr; i++ {
+		array[i] = math.Log(1 - sigmoid(xtheta.AtVec(i)))
+	}
+	ones := func() []float64 {
+		data := make([]float64, yr)
+		for i := 0; i < yr; i++ {
+			data[i] = 1
+		}
+		return data
+	}()
+	floats.Sub(ones, y.RawVector().Data)
+	floats.MulTo(t2, ones, array)
 
-	sum := mat.Dot(&_error, &_error)
-	sum = sum / (2 * float64(_error.Len()))
-	return sum
+	//     return np.sum(first - second) / (len(X))
+	floats.Sub(t1, t2)
+	return floats.Sum(t1) / float64(yr)
 }
 
 // ```python
@@ -53,7 +83,7 @@ func ComputeCost(X *mat.Dense, y, theta mat.Vector) float64 {
 
 // X shape is r x c, theta shape is c x 1, y shape is r x 1
 // GradientDescent
-func GradientDescent(X *mat.Dense, y, theta mat.Vector, alpha float64, inters int) (otheta, cost []float64) {
+func GradientDescent(X *mat.Dense, y *mat.VecDense, theta mat.Vector, alpha float64, inters int) (otheta, cost []float64) {
 	var _error /* , term */ mat.VecDense
 
 	xr, xc := X.Dims()
@@ -88,27 +118,3 @@ func GradientDescent(X *mat.Dense, y, theta mat.Vector, alpha float64, inters in
 	}
 	return otheta, cost
 }
-
-// func Sum(m *mat.Dense) float64 {
-// 	r, c := m.Dims()
-
-// 	var sum float64
-// 	for i := 0; i < r; i++ {
-// 		for j := 0; j < c; j++ {
-// 			sum = sum + m.At(i, j)
-// 		}
-// 	}
-// 	return sum
-// }
-
-// func shuffle(X [][]float64, rnd func(n int) int) [][]float64 {
-
-// 	newDs := make([][]float64, len(X))
-// 	copy(newDs, X)
-
-// 	for i, _ := range X {
-// 		j := i + rnd(len(X)-i)
-// 		newDs[i], newDs[j] = newDs[j], newDs[i]
-// 	}
-// 	return newDs
-// }

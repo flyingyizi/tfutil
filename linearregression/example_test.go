@@ -1,9 +1,11 @@
-package batch
+package linearregression_test
 
 import (
 	"fmt"
 
 	"github.com/flyingyizi/tfutil"
+	. "github.com/flyingyizi/tfutil/csvdata"
+	. "github.com/flyingyizi/tfutil/linearregression"
 	"gonum.org/v1/gonum/mat"
 )
 

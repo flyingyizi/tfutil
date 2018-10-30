@@ -1,4 +1,4 @@
-package batch
+package csvdata
 
 import (
 	"encoding/csv"

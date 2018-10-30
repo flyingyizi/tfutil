@@ -1,8 +1,9 @@
-package batch
+package csvdata_test
 
 import (
 	"reflect"
 	"testing"
+	. "github.com/flyingyizi/tfutil/csvdata"
 )
 
 func TestCsvToDense(t *testing.T) {
