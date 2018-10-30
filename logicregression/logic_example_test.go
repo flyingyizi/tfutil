@@ -31,10 +31,11 @@ func ExampleGradientDescent_ex2data1() {
 	theta1 := mat.NewVecDense(xc, nil)
 
 	t, cost := GradientDescent(X, Y, theta1, 0.01, 1000)
-	tfutil.SaveScatter("ex1data1", orig[0], orig[1], t...)
-	tfutil.SaveCostLine("ex1data1-cost", cost)
+	tfutil.SaveScatter("ex2data1", orig[0], orig[1], t...)
+	tfutil.SaveCostLine("ex2data1-cost", cost)
 
-	fmt.Println(ComputeCost(X, Y, mat.NewVecDense(len(t), t)))
+	//fmt.Println(ComputeCost(X, Y, mat.NewVecDense(len(t), t)))
+	fmt.Println(t)
 	// Output:
 	// 0.14744830407944606
 }
