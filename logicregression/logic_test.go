@@ -3,7 +3,6 @@ package logicregression_test
 import (
 	"testing"
 
-	. "github.com/flyingyizi/tfutil/csvdata"
 	. "github.com/flyingyizi/tfutil/logicregression"
 
 	"gonum.org/v1/gonum/mat"
@@ -33,7 +32,7 @@ func TestComputeCost(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ComputeCost(tt.args.X, tt.args.y, tt.args.theta); got != tt.want {
+			if got := ComputeCost(LogicHyphothesis, tt.args.X, tt.args.y, tt.args.theta); got != tt.want {
 				t.Errorf("ComputeCost() = %v, want %v", got, tt.want)
 			}
 		})

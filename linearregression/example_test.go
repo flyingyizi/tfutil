@@ -11,13 +11,13 @@ import (
 
 func ExampleGradientDescent_ex1data1() {
 
-	X, Y, orig := CsvToDense("ex1data1.txt", true)
+	X, Y, _ := CsvToDense("ex1data1.txt", true)
 
 	_, xc := X.Dims()
 	theta1 := mat.NewVecDense(xc, nil)
 
 	t, cost := GradientDescent(X, Y, theta1, 0.01, 1000)
-	tfutil.SaveScatter("ex1data1", orig[0], orig[1], t...)
+	//tfutil.SaveScatter("ex1data1", orig[0], orig[1], t...)
 	tfutil.SaveCostLine("ex1data1-cost", cost)
 
 	fmt.Println(ComputeCost(X, Y, mat.NewVecDense(len(t), t)))

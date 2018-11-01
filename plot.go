@@ -1,9 +1,10 @@
 package tfutil
 
 import (
+	"errors"
+	"fmt"
 	"image/color"
 
-	"math"
 	"os"
 
 	"gonum.org/v1/gonum/mat"
@@ -14,15 +15,65 @@ import (
 	"gonum.org/v1/plot/vg/vgimg"
 )
 
-//SaveScatter, save scatter data to png file named outfileName
-func SaveScatter(outfileName string, x, y []float64, thetas ...float64) {
+type ScaterData struct {
+	//using key to contact the xys and colors, and key will be
+	// the name of the scatter data
+	XYsList map[string]plotter.XYs
+	Colors  map[string]color.RGBA
+}
 
-	scatterData := make(plotter.XYs, len(x))
-	for i := range scatterData {
-		scatterData[i].X = x[i]
-		scatterData[i].Y = y[i]
+func (s *ScaterData) Add(name string, xs, ys []float64) error {
+	if len(xs) != len(ys) {
+		return (errors.New("wrong length"))
+	}
+	// init xys data
+	xys := make(plotter.XYs, len(xs))
+	for i := 0; i < len(xs); i++ {
+		xys[i].X, xys[i].Y = xs[i], ys[i]
 	}
 
+	if s.XYsList == nil {
+		s.XYsList = make(map[string]plotter.XYs)
+	}
+
+	if _, ok := s.XYsList[name]; ok {
+		delete(s.XYsList, name)
+	}
+	s.XYsList[name] = xys
+	return nil
+}
+
+func (s *ScaterData) Del(name string) {
+	if s.XYsList == nil {
+		return
+	}
+
+	if _, ok := s.XYsList[name]; ok {
+		delete(s.XYsList, name)
+	}
+	return
+}
+func (s *ScaterData) SetColor(name string, c color.RGBA) {
+	if s.Colors == nil {
+		s.Colors = make(map[string]color.RGBA)
+	}
+
+	s.Colors[name] = c
+}
+
+func (s *ScaterData) Clear() {
+
+	for k, _ := range s.XYsList {
+		delete(s.XYsList, k)
+	}
+	for k, _ := range s.Colors {
+		delete(s.XYsList, k)
+	}
+	return
+}
+
+//SaveScatter, save scatter data to png file named outfileName
+func SaveScatter(outfileName string, xys *ScaterData, thetas ...float64) {
 	// Create a new plot, set its title and
 	// axis labels.
 	p, err := plot.New()
@@ -35,24 +86,30 @@ func SaveScatter(outfileName string, x, y []float64, thetas ...float64) {
 	// Draw a grid behind the data
 	p.Add(plotter.NewGrid())
 
-	// Make a scatter plotter and set its style.
-	s, err := plotter.NewScatter(scatterData)
-	if err != nil {
-		panic(err)
+	for name, sdata := range xys.XYsList {
+		// Make a scatter plotter and set its style.
+		s, err := plotter.NewScatter(sdata)
+		if err != nil {
+			panic(err)
+		}
+
+		if v, ok := xys.Colors[name]; ok {
+			s.GlyphStyle.Color = v
+		}
+		p.Add(s)
+		p.Legend.Add(fmt.Sprint("", name), s)
 	}
-	s.GlyphStyle.Color = color.RGBA{R: 255, B: 128, A: 255}
-	p.Add(s)
-	p.Legend.Add("scatter", s)
 
 	parms := len(thetas)
-
 	if parms >= 1 {
 		// make a hyA quadratic function
 		h := plotter.NewFunction(func(x float64) float64 {
 			if parms == 1 {
-				return (thetas[0] * x)
-			} else {
+				return (thetas[0])
+			} else if parms == 2 {
 				return (thetas[0] + thetas[1]*x)
+			} else {
+				return -(thetas[0] + thetas[1]*x) / thetas[2]
 			}
 		})
 		h.Color = color.RGBA{B: 255, A: 255}
@@ -187,31 +244,8 @@ func SaveResidualPlot(outfileName string, X *mat.Dense, y, theta mat.Vector) {
 	}
 }
 
-func ShowToImage(x, y []float64,
-	cost []float64,
-	filename string, thetas ...float64) {
-
-	showScatter := true
-	//prepare scatter
-	if len(x) != len(y) {
-		showScatter = false
-		//panic(errors.New("wrong shape size"))
-	}
-
-	var scatterData plotter.XYs
-	if showScatter == true {
-		scatterData := make(plotter.XYs, len(x))
-		for i := range scatterData {
-			scatterData[i].X = x[i]
-			scatterData[i].Y = y[i]
-		}
-	}
-	costData := make(plotter.XYs, len(cost))
-	for i := range costData {
-		costData[i].X = float64(i)
-		costData[i].Y = cost[i]
-	}
-
+// SaveTwoScatter show two scatter plot 2 by 1
+func SaveTwoScatter(outfileName string, xys0, xys1 *ScaterData) {
 	const rows, cols = 2, 1
 	plots := make([][]*plot.Plot, rows)
 	for j := 0; j < rows; j++ {
@@ -222,40 +256,39 @@ func ShowToImage(x, y []float64,
 			if err != nil {
 				panic(err)
 			}
-
-			// draw scatter data and hypothesis function
+			// draw xys0 scatter data and hypothesis function
 			if i == 0 && j == 0 {
-				// Make a scatter plotter and set its style.
-				s, err := plotter.NewScatter(scatterData)
-				if err != nil {
-					panic(err)
-				}
-				s.GlyphStyle.Color = color.RGBA{R: 255, B: 128, A: 255}
 
-				// make a hyA quadratic function x^2
-				h := plotter.NewFunction(func(x float64) float64 {
-					var total float64 = 0.0
-					for index, t := range thetas {
-						total += t * math.Pow(x, float64(index))
+				for name, sdata := range xys0.XYsList {
+					// Make a scatter plotter and set its style.
+					s, err := plotter.NewScatter(sdata)
+					if err != nil {
+						panic(err)
 					}
-					return total
-				})
-				h.Color = color.RGBA{B: 255, A: 255}
 
-				p.Add(s, h)
-			}
-			// draw cost line
-			if i == 0 && j == 1 {
-				// Make a line plotter and set its style.
-				l, err := plotter.NewLine(costData)
-				if err != nil {
-					panic(err)
+					if v, ok := xys0.Colors[name]; ok {
+						s.GlyphStyle.Color = v
+					}
+					p.Add(s)
+					p.Legend.Add(fmt.Sprint("", name), s)
 				}
-				l.LineStyle.Width = vg.Points(1)
-				//l.LineStyle.Dashes = []vg.Length{vg.Points(5), vg.Points(5)}
-				l.LineStyle.Color = color.RGBA{B: 255, A: 255}
+				//p.Title =
+			}
+			// draw xys1 scatter data and hypothesis function
+			if i == 0 && j == 1 {
+				for name, sdata := range xys1.XYsList {
+					// Make a scatter plotter and set its style.
+					s, err := plotter.NewScatter(sdata)
+					if err != nil {
+						panic(err)
+					}
 
-				p.Add(l)
+					if v, ok := xys1.Colors[name]; ok {
+						s.GlyphStyle.Color = v
+					}
+					p.Add(s)
+					p.Legend.Add(fmt.Sprint("", name), s)
+				}
 			}
 
 			// make sure the horizontal scales match
@@ -266,7 +299,7 @@ func ShowToImage(x, y []float64,
 		}
 	}
 
-	img := vgimg.New(vg.Points(150), vg.Points(175))
+	img := vgimg.New(vg.Points(450), vg.Points(575))
 	dc := draw.New(img)
 
 	t := draw.Tiles{
@@ -283,7 +316,7 @@ func ShowToImage(x, y []float64,
 		}
 	}
 
-	w, err := os.Create(filename + ".png")
+	w, err := os.Create(outfileName + ".png")
 	if err != nil {
 		panic(err)
 	}
