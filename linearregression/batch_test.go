@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	. "github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/csvdata"
 	. "github.com/flyingyizi/tfutil/linearregression"
 	"gonum.org/v1/gonum/mat"
 )
@@ -12,8 +12,17 @@ import (
 //	"gonum.org/v1/gonum/stat"
 
 func Test_gradientDescent(t *testing.T) {
+	filename := "ex2data1.txt"
+	orig := mat.NewDense(csvdata.CsvToArray("testdata/"+filename, false))
+	or, oc := orig.Dims()
+	// assign Y
+	var Y mat.VecDense
+	Y.CloneVec(orig.ColView(oc - 1))
+	// assign Y
+	ones := mat.NewVecDense(or, csvdata.Ones(or))
+	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
-	X, Y, _ := CsvToDense("ex1data2.txt", true)
+	//X, Y, _ := CsvToDense("ex1data2.txt", true)
 
 	_, rc := X.Dims()
 	theta1 := mat.NewVecDense(rc, nil)
@@ -38,7 +47,7 @@ func Test_gradientDescent(t *testing.T) {
 		// TODO: Add test cases.
 		{
 			name:       "test1",
-			args:       args{X: X, y: Y, theta: theta1, alpha: 0.01, inters: 1000},
+			args:       args{X: X, y: &Y, theta: theta1, alpha: 0.01, inters: 1000},
 			wantOtheta: []float64{-1.0199878766662607e-16, 0.8785036522230538, -0.04691665703805384},
 			//wantCost:   0.13070336960771892,
 		},

@@ -3,52 +3,103 @@ package csvdata_test
 import (
 	"reflect"
 	"testing"
+
 	. "github.com/flyingyizi/tfutil/csvdata"
+	"gonum.org/v1/gonum/mat"
 )
 
-func TestCsvToDense(t *testing.T) {
+func TestCsvToArray(t *testing.T) {
 	type args struct {
-		filename string
+		filename  string
+		normalize bool
 	}
 	tests := []struct {
-		name string
-		args args
-		//wantX *mat.Dense
-		wantX [][]float64
+		name    string
+		args    args
+		wantR   int
+		wantC   int
+		wantOut []float64
 	}{
 		// TODO: Add test cases.
 		{
-			name: "ex1data2.txt",
-			args: args{filename: "ex1data2.txt"},
-			wantX: [][]float64{
-
-				{2104, 1600, 2400, 1416, 3000, 1985, 1534, 1427, 1380, 1494,
-					1940, 2000, 1890, 4478, 1268, 2300, 1320, 1236, 2609, 3031,
-					1767, 1888, 1604, 1962, 3890, 1100, 1458, 2526, 2200, 2637,
-					1839, 1000, 2040, 3137, 1811, 1437, 1239, 2132, 4215, 2162,
-					1664, 2238, 2567, 1200, 852, 1852, 1203},
-
-				{3, 3, 3, 2, 4, 4, 3, 3, 3, 3,
-					4, 3, 3, 5, 3, 4, 2, 3, 4, 4,
-					3, 2, 3, 4, 3, 3, 3, 3, 3, 3,
-					2, 1, 4, 3, 4, 3, 3, 4, 4, 4,
-					2, 3, 4, 3, 2, 4, 3},
-
-				{399900, 329900, 369000, 232000, 539900, 299900, 314900, 198999, 212000, 242500,
-					239999, 347000, 329999, 699900, 259900, 449900, 299900, 199900, 499998, 599000,
-					252900, 255000, 242900, 259900, 573900, 249900, 464500, 469000, 475000, 299900,
-					349900, 169900, 314900, 579900, 285900, 249900, 229900, 345000, 549000, 287000,
-					368500, 329900, 314000, 299000, 179900, 299900, 239500},
-			},
+			name:  "ex1data1.txt",
+			args:  args{filename: "ex1data1.txt", normalize: false},
+			wantR: 97, wantC: 2,
+			wantOut: []float64{
+				//16 * 12 + 2
+				6.1101, 17.592, 5.5277, 9.1302, 8.5186, 13.662, 7.0032, 11.854, 5.8598, 6.8233, 8.3829, 11.886,
+				7.4764, 4.3483, 8.5781, 12, 6.4862, 6.5987, 5.0546, 3.8166, 5.7107, 3.2522, 14.164, 15.505,
+				5.734, 3.1551, 8.4084, 7.2258, 5.6407, 0.71618, 5.3794, 3.5129, 6.3654, 5.3048, 5.1301, 0.56077,
+				6.4296, 3.6518, 7.0708, 5.3893, 6.1891, 3.1386, 20.27, 21.767, 5.4901, 4.263, 6.3261, 5.1875,
+				5.5649, 3.0825, 18.945, 22.638, 12.828, 13.501, 10.957, 7.0467, 13.176, 14.692, 22.203, 24.147,
+				5.2524, -1.22, 6.5894, 5.9966, 9.2482, 12.134, 5.8918, 1.8495, 8.2111, 6.5426, 7.9334, 4.5623,
+				8.0959, 4.1164, 5.6063, 3.3928, 12.836, 10.117, 6.3534, 5.4974, 5.4069, 0.55657, 6.8825, 3.9115,
+				11.708, 5.3854, 5.7737, 2.4406, 7.8247, 6.7318, 7.0931, 1.0463, 5.0702, 5.1337, 5.8014, 1.844,
+				11.7, 8.0043, 5.5416, 1.0179, 7.5402, 6.7504, 5.3077, 1.8396, 7.4239, 4.2885, 7.6031, 4.9981,
+				6.3328, 1.4233, 6.3589, -1.4211, 6.2742, 2.4756, 5.6397, 4.6042, 9.3102, 3.9624, 9.4536, 5.4141,
+				8.8254, 5.1694, 5.1793, -0.74279, 21.279, 17.929, 14.908, 12.054, 18.959, 17.054, 7.2182, 4.8852,
+				8.2951, 5.7442, 10.236, 7.7754, 5.4994, 1.0173, 20.341, 20.992, 10.136, 6.6799, 7.3345, 4.0259,
+				6.0062, 1.2784, 7.2259, 3.3411, 5.0269, -2.6807, 6.5479, 0.29678, 7.5386, 3.8845, 5.0365, 5.7014,
+				10.274, 6.7526, 5.1077, 2.0576, 5.7292, 0.47953, 5.1884, 0.20421, 6.3557, 0.67861, 9.7687, 7.5435,
+				6.5159, 5.3436, 8.5172, 4.2415, 9.1802, 6.7981, 6.002, 0.92695, 5.5204, 0.152, 5.0594, 2.8214,
+				5.7077, 1.8451, 7.6366, 4.2959, 5.8707, 7.2029, 5.3054, 1.9869, 8.2934, 0.14454, 13.394, 9.0551,
+				5.4369, 0.61705},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, gotX := CsvToDense(tt.args.filename, true)
-			if !reflect.DeepEqual(gotX, tt.wantX) {
-				t.Errorf("CsvToDense() gotX = %v, want %v", gotX, tt.wantX)
+			gotR, gotC, gotOut := CsvToArray(tt.args.filename, tt.args.normalize)
+			if gotR != tt.wantR {
+				t.Errorf("CsvToArray() gotR = %v, want %v", gotR, tt.wantR)
+			}
+			if gotC != tt.wantC {
+				t.Errorf("CsvToArray() gotC = %v, want %v", gotC, tt.wantC)
+			}
+			if !reflect.DeepEqual(gotOut, tt.wantOut) {
+				t.Errorf("CsvToArray() gotOut = %v, want %v", gotOut, tt.wantOut)
 			}
 		})
 	}
+}
 
+func TestJoinDese(t *testing.T) {
+	type args struct {
+		a *mat.Dense
+		b *mat.Dense
+		c *mat.Dense
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantDest *mat.Dense
+	}{
+		// TODO: Add test cases.
+		{name: "1",
+			args: args{
+				a: mat.NewDense(Flatten(
+					[][]float64{
+						{1, 2, 3},
+						{4, 5, 6}})),
+				b: mat.NewDense(Flatten(
+					[][]float64{
+						{11, 12, 13},
+						{14, 15, 16}})),
+				c: mat.NewDense(Flatten(
+					[][]float64{
+						{21, 22, 23},
+						{24, 25, 26}})),
+			},
+			wantDest: mat.NewDense(Flatten(
+				[][]float64{
+					{1, 2, 3, 11, 12, 13, 21, 22, 23},
+					{4, 5, 6, 14, 15, 16, 24, 25, 26}})),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotDest := JoinDese(tt.args.a, tt.args.b, tt.args.c); !reflect.DeepEqual(gotDest, tt.wantDest) {
+				t.Errorf("JoinDese() = %v, want %v", gotDest, tt.wantDest)
+			}
+		})
+	}
 }

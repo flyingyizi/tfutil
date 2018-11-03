@@ -3,14 +3,23 @@ package logicregression_test
 import (
 	"testing"
 
+	"github.com/flyingyizi/tfutil/csvdata"
 	. "github.com/flyingyizi/tfutil/logicregression"
 
 	"gonum.org/v1/gonum/mat"
 )
 
 func TestComputeCost(t *testing.T) {
+	orig := mat.NewDense(csvdata.CsvToArray("ex2data1.txt", false))
+	or, oc := orig.Dims()
+	// assign Y
+	var Y mat.VecDense
+	Y.CloneVec(orig.ColView(oc - 1))
+	// assign Y
+	ones := mat.NewVecDense(or, csvdata.Ones(or))
+	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
-	X, Y, _ := CsvToDense("ex2data1.txt", false)
+	//	X, Y, _ := CsvToDense("ex2data1.txt", false)
 
 	_, rc := X.Dims()
 	theta1 := mat.NewVecDense(rc, nil)
@@ -27,8 +36,8 @@ func TestComputeCost(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{name: "11",
-			args: args{X: X, y: Y, theta: theta1},
-			want: 0.69314718055994529},
+			args: args{X: X, y: &Y, theta: theta1},
+			want: 0.6931471805599458},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
