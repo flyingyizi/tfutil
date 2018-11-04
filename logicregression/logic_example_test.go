@@ -24,7 +24,7 @@ func ExampleGradientDescent_ex2data1() {
 	copy(oldout, Y.RawVector().Data)
 
 	// assign X
-	norm := csvdata.NormalizeMatrix(orig.Slice(0, or, 0, oc-1))
+	norm := csvdata.FeatureScalingMatrix(orig.Slice(0, or, 0, oc-1))
 	ones := mat.NewVecDense(or, csvdata.Ones(or))
 	X := csvdata.JoinDese(ones, norm) //X shape is: 'or by (oc)'
 
@@ -105,8 +105,8 @@ func ExampleGradientDescent_ex2data2() {
 			return math.Pow(v, 2)
 		},
 		orig.Slice(0, or, 0, oc-1))
-	norm := csvdata.NormalizeMatrix(orig.Slice(0, or, 0, oc-1))
-	additionnorm := csvdata.NormalizeMatrix(&addition)
+	norm := csvdata.FeatureScalingMatrix(orig.Slice(0, or, 0, oc-1))
+	additionnorm := csvdata.FeatureScalingMatrix(&addition)
 	ones := mat.NewVecDense(or, csvdata.Ones(or))
 	X := csvdata.JoinDese(ones, norm, additionnorm)
 

@@ -7,7 +7,7 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-func ExampleNormalizeMatrix() {
+func ExampleFeatureScalingMatrix() {
 
 	m := mat.NewDense(5, 3, []float64{
 
@@ -18,7 +18,7 @@ func ExampleNormalizeMatrix() {
 		3000, 4, 539900,
 	})
 
-	got := NormalizeMatrix(m)
+	got := FeatureScalingMatrix(m)
 	fk := mat.Formatted(got, mat.Prefix(""), mat.Squeeze())
 	fmt.Println(fk)
 

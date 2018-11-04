@@ -73,7 +73,7 @@ func CsvToArray(filename string, normalize bool) (r, c int, out []float64) {
 		t.Clone(o.T())
 		tr, _ := t.Dims()
 		for i := 0; i < tr; i++ {
-			t.SetRow(i, Normalize(t.RawRowView(i)...))
+			t.SetRow(i, FeatureScaling(t.RawRowView(i)...))
 		}
 		o.Clone(t.T())
 
@@ -85,9 +85,9 @@ func CsvToArray(filename string, normalize bool) (r, c int, out []float64) {
 
 }
 
-//NormalizeMatrix normalize each colum in the matrix
+//FeatureScalingMatrix normalize each colum in the matrix
 //with algothim $\frac {x-m} {stderr}$
-func NormalizeMatrix(m mat.Matrix) *mat.Dense {
+func FeatureScalingMatrix(m mat.Matrix) *mat.Dense {
 	if m == nil {
 		return nil
 	}
@@ -97,7 +97,7 @@ func NormalizeMatrix(m mat.Matrix) *mat.Dense {
 
 	tr, _ := t.Dims()
 	for i := 0; i < tr; i++ {
-		t.SetRow(i, Normalize(t.RawRowView(i)...))
+		t.SetRow(i, FeatureScaling(t.RawRowView(i)...))
 	}
 	var o mat.Dense
 	o.Clone(t.T())
@@ -105,8 +105,9 @@ func NormalizeMatrix(m mat.Matrix) *mat.Dense {
 	return &o
 }
 
-//Normalize normalize data with algothim $\frac {x-m} {stderr}$
-func Normalize(data ...float64) []float64 {
+//FeatureScaling feature scaling  with algothim $\frac {x-m} {stderr}$
+// 特征归一化(Feature Scaling)
+func FeatureScaling(data ...float64) []float64 {
 	if len(data) == 0 {
 		return nil
 	}

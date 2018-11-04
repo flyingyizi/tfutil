@@ -16,7 +16,7 @@ func ExampleGradientDescent_ex1data1() {
 	// assign Y
 	var Y mat.VecDense
 	Y.CloneVec(orig.ColView(oc - 1))
-	// assign Y
+	// assign X
 	ones := mat.NewVecDense(or, csvdata.Ones(or))
 	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
@@ -39,7 +39,7 @@ func ExampleGradientDescent_ex1data2() {
 	// assign Y
 	var Y mat.VecDense
 	Y.CloneVec(orig.ColView(oc - 1))
-	// assign Y
+	// assign X
 	ones := mat.NewVecDense(or, csvdata.Ones(or))
 	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
