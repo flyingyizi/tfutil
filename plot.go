@@ -3,12 +3,15 @@ package tfutil
 import (
 	"errors"
 	"fmt"
+	"image"
 	"image/color"
+	"math"
 
 	"os"
 
 	"gonum.org/v1/gonum/mat"
 	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/palette/moreland"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
 	"gonum.org/v1/plot/vg/draw"
@@ -18,56 +21,45 @@ import (
 type ScaterData struct {
 	//using key to contact the xys and colors, and key will be
 	// the name of the scatter data
-	XYsList map[string]plotter.XYs
-	Colors  map[string]color.RGBA
+	XYZsList map[string]plotter.XYZs
 }
 
-func (s *ScaterData) Add(name string, xs, ys []float64) error {
-	if len(xs) != len(ys) {
+func (s *ScaterData) Add(name string, xs, ys, zs []float64) error {
+	if len(xs) != len(ys) || len(xs) != len(zs) {
 		return (errors.New("wrong length"))
 	}
-	// init xys data
-	xys := make(plotter.XYs, len(xs))
+	// init xyzs data
+	xyzs := make(plotter.XYZs, len(xs))
 	for i := 0; i < len(xs); i++ {
-		xys[i].X, xys[i].Y = xs[i], ys[i]
+		xyzs[i].X, xyzs[i].Y, xyzs[i].Z = xs[i], ys[i], zs[i]
 	}
 
-	if s.XYsList == nil {
-		s.XYsList = make(map[string]plotter.XYs)
+	if s.XYZsList == nil {
+		s.XYZsList = make(map[string]plotter.XYZs)
 	}
 
-	if _, ok := s.XYsList[name]; ok {
-		delete(s.XYsList, name)
+	if _, ok := s.XYZsList[name]; ok {
+		delete(s.XYZsList, name)
 	}
-	s.XYsList[name] = xys
+	s.XYZsList[name] = xyzs
 	return nil
 }
 
 func (s *ScaterData) Del(name string) {
-	if s.XYsList == nil {
+	if s.XYZsList == nil {
 		return
 	}
 
-	if _, ok := s.XYsList[name]; ok {
-		delete(s.XYsList, name)
+	if _, ok := s.XYZsList[name]; ok {
+		delete(s.XYZsList, name)
 	}
 	return
-}
-func (s *ScaterData) SetColor(name string, c color.RGBA) {
-	if s.Colors == nil {
-		s.Colors = make(map[string]color.RGBA)
-	}
-
-	s.Colors[name] = c
 }
 
 func (s *ScaterData) Clear() {
 
-	for k, _ := range s.XYsList {
-		delete(s.XYsList, k)
-	}
-	for k, _ := range s.Colors {
-		delete(s.XYsList, k)
+	for k, _ := range s.XYZsList {
+		delete(s.XYZsList, k)
 	}
 	return
 }
@@ -86,16 +78,13 @@ func SaveScatter(outfileName string, xys *ScaterData, thetas ...float64) {
 	// Draw a grid behind the data
 	p.Add(plotter.NewGrid())
 
-	for name, sdata := range xys.XYsList {
+	for name, sdata := range xys.XYZsList {
 		// Make a scatter plotter and set its style.
 		s, err := plotter.NewScatter(sdata)
 		if err != nil {
 			panic(err)
 		}
 
-		if v, ok := xys.Colors[name]; ok {
-			s.GlyphStyle.Color = v
-		}
 		p.Add(s)
 		p.Legend.Add(fmt.Sprint("", name), s)
 	}
@@ -131,7 +120,7 @@ func SaveCostLine(outfileName string, cost []float64) {
 		return
 	}
 
-	costData := make(plotter.XYs, len(cost))
+	costData := make(plotter.XYZs, len(cost))
 	for i := range costData {
 		costData[i].X = float64(i)
 		costData[i].Y = cost[i]
@@ -181,7 +170,7 @@ func SaveResidualPlot(outfileName string, X *mat.Dense, y, theta mat.Vector) {
 
 	l := y.Len()
 
-	hyXYs, yXYs, diffXYs := make(plotter.XYs, l), make(plotter.XYs, l), make(plotter.XYs, l)
+	hyXYs, yXYs, diffXYs := make(plotter.XYZs, l), make(plotter.XYZs, l), make(plotter.XYZs, l)
 	for i := 0; i < l; i++ {
 		hyXYs[i].X = float64(i)
 		hyXYs[i].Y = h.AtVec(i)
@@ -259,15 +248,11 @@ func SaveTwoScatter(outfileName string, xys0, xys1 *ScaterData) {
 			// draw xys0 scatter data and hypothesis function
 			if i == 0 && j == 0 {
 
-				for name, sdata := range xys0.XYsList {
+				for name, sdata := range xys0.XYZsList {
 					// Make a scatter plotter and set its style.
-					s, err := plotter.NewScatter(sdata)
+					s, err := myNewScatter(sdata)
 					if err != nil {
 						panic(err)
-					}
-
-					if v, ok := xys0.Colors[name]; ok {
-						s.GlyphStyle.Color = v
 					}
 					p.Add(s)
 					p.Legend.Add(fmt.Sprint("", name), s)
@@ -276,16 +261,13 @@ func SaveTwoScatter(outfileName string, xys0, xys1 *ScaterData) {
 			}
 			// draw xys1 scatter data and hypothesis function
 			if i == 0 && j == 1 {
-				for name, sdata := range xys1.XYsList {
+				for name, sdata := range xys1.XYZsList {
 					// Make a scatter plotter and set its style.
-					s, err := plotter.NewScatter(sdata)
+					s, err := myNewScatter(sdata)
 					if err != nil {
 						panic(err)
 					}
 
-					if v, ok := xys1.Colors[name]; ok {
-						s.GlyphStyle.Color = v
-					}
 					p.Add(s)
 					p.Legend.Add(fmt.Sprint("", name), s)
 				}
@@ -324,5 +306,97 @@ func SaveTwoScatter(outfileName string, xys0, xys1 *ScaterData) {
 	png := vgimg.PngCanvas{Canvas: img}
 	if _, err := png.WriteTo(w); err != nil {
 		panic(err)
+	}
+}
+
+func myNewScatter(sdata plotter.XYZs) (s *plotter.Scatter, err error) {
+	// Make a scatter plotter and set its style.
+	s, err = plotter.NewScatter(sdata)
+	if err != nil {
+		return
+	}
+
+	// Calculate the range of Z values.
+	minZ, maxZ := math.Inf(1), math.Inf(-1)
+	for _, xyz := range sdata {
+		if xyz.Z > maxZ {
+			maxZ = xyz.Z
+		}
+		if xyz.Z < minZ {
+			minZ = xyz.Z
+		}
+	}
+
+	//
+	colors := moreland.Kindlmann() // Initialize a color map.
+	colors.SetMax(1 + maxZ)
+	colors.SetMin(minZ)
+
+	// Specify style and color for individual points.
+	s.GlyphStyleFunc = func(i int) draw.GlyphStyle {
+		_, _, z := sdata.XYZ(i)
+		d := (z - minZ) / (maxZ - minZ)
+		rng := maxZ - minZ
+		k := d*rng + minZ
+		c, err := colors.At(k)
+		if err != nil {
+			panic(err)
+		}
+		return draw.GlyphStyle{Color: c, Radius: vg.Points(3), Shape: draw.CircleGlyph{}}
+	}
+
+	return
+}
+
+// func myNewLegend(p *plot.Plot, minZ,maxZ float64) {
+// //////////
+// 	//Create a legend
+// 	thumbs := plotter.PaletteThumbnailers(colors.Palette(n))
+// 	for i := len(thumbs) - 1; i >= 0; i-- {
+// 		t := thumbs[i]
+// 		if i != 0 && i != len(thumbs)-1 {
+// 			p.Legend.Add("", t)
+// 			continue
+// 		}
+// 		var val int
+// 		switch i {
+// 		case 0:
+// 			val = int(minZ)
+// 		case len(thumbs) - 1:
+// 			val = int(maxZ)
+// 		}
+// 		p.Legend.Add(fmt.Sprintf("%d", val), t)
+// 	}
+
+// 	// This is the width of the legend, experimentally determined.
+// 	const legendWidth = vg.Centimeter
+// 	// Slide the legend over so it doesn't overlap the ScatterPlot.
+// 	p.Legend.XOffs = legendWidth
+
+// //////////
+
+// }
+
+func NewGray(r, c int, data []float64) {
+	// 图片大小
+	const size = 300
+	// 根据给定大小创建灰度图
+	pic := image.NewGray(image.Rect(0, 0, r, c))
+	// 遍历每个像素
+	//灰度图是一种常见的图片格式，一般情况下颜色由 8 位组成，灰度范围为 0～255，0 表示黑色，255 表示白色。
+	for x := 0; x < r; x++ {
+		for y := 0; y < c; y++ {
+			// 填充为白色
+			pic.SetGray(x, y, color.Gray{255})
+		}
+	}
+	// 从0到最大像素生成x坐标
+	for x := 0; x < r; x++ {
+		// 让sin的值的范围在0~2Pi之间
+		s := float64(x) * 2 * math.Pi / size
+		// sin的幅度为一半的像素。向下偏移一半像素并翻转
+		y := r/2 - math.Sin(s)*r/2
+		// 用黑色绘制sin轨迹
+		pic.SetGray(x, int(y), color.Gray{0})
 	}
 }

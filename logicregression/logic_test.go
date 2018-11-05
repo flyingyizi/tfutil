@@ -1,6 +1,7 @@
 package logicregression_test
 
 import (
+	"path"
 	"testing"
 
 	"github.com/flyingyizi/tfutil/csvdata"
@@ -10,7 +11,8 @@ import (
 )
 
 func TestComputeCost(t *testing.T) {
-	orig := mat.NewDense(csvdata.CsvToArray("ex2data1.txt", false))
+	filename := "ex2data1.txt"
+	orig := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", filename), false))
 	or, oc := orig.Dims()
 	// assign Y
 	var Y mat.VecDense
