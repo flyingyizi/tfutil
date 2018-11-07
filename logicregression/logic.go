@@ -5,25 +5,11 @@ import (
 
 	"gonum.org/v1/gonum/floats"
 
-	"encoding/csv"
-	"fmt"
-	"io"
-	"os"
-	"strconv"
-
 	"gonum.org/v1/gonum/mat"
-
-	"gonum.org/v1/gonum/stat"
 )
 
-// def cost(theta, X, y):
-//     theta = np.matrix(theta)
-//     X = np.matrix(X)
-//     y = np.matrix(y)
-//     first = np.multiply(-y, np.log(sigmoid(X * theta.T)))
-//     second = np.multiply((1 - y), np.log(1 - sigmoid(X * theta.T)))
-//     return np.sum(first - second) / (len(X))
-
+//ComputeCost , with special theta to compute the cost
+//: $$J(\theta)=\frac{1}{2m} \sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2 $$
 func ComputeCost(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Vector) float64 {
 	xr, xc := X.Dims()
 	yr, yc := y.Dims()
@@ -158,99 +144,30 @@ func Predict(X *mat.Dense, theta mat.Vector) []int {
 	return newout
 }
 
-// CsvToDense,
-// csv文件中的列数据在输出到orig时,orgin[i]代表原始数据的第i列
-// 当normalize为true时，代表输出的X，Y经过正规化处理; 否则数据为向量化后的原始数据
-// 由于logistic regression的y必须是0/1，因此无论是否正规化数据，该函数都不会变更y的值
-func CsvToDense(filename string, normalize bool) (X *mat.Dense, Y *mat.VecDense, orign [][]float64) {
-	file, err := os.Open(filename)
+// def predict_all(X, all_theta):
+//     rows = X.shape[0]
+//     params = X.shape[1]
+//     num_labels = all_theta.shape[0]
 
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	defer file.Close()
+//     # same as before, insert ones to match the shape
+//     X = np.insert(X, 0, values=np.ones(rows), axis=1)
 
-	reader := csv.NewReader(file)
+//     # convert to matrices
+//     X = np.matrix(X)
+//     all_theta = np.matrix(all_theta)
 
-	reader.Comment = '#' //可以设置读入文件中的注释符
-	reader.Comma = ','   //默认是逗号，也可以自己设置
+//     # compute the class probability for each class on each training instance
+//     h = sigmoid(X * all_theta.T)
 
-	firstRecord, err := reader.Read()
-	if err == io.EOF {
-		return
-	} else if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	cols := len(firstRecord)
-	data := make([][]float64, cols+1)
+//     # create array of the index with the maximum probability
+//     h_argmax = np.argmax(h, axis=1)
 
-	row := 0
-	for i := 0; i < cols; i++ {
-		data[i+1] = make([]float64, 0)
-		if value, err := strconv.ParseFloat(firstRecord[i], 64); err == nil {
-			data[i+1] = append(data[i+1], value)
-		} else {
-			return
-		}
-	}
-	row++
+//     # because our array was zero-indexed we need to add one for the true label prediction
+//     h_argmax = h_argmax + 1
 
-	for {
-		// continue scan
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			fmt.Println("Error:", err)
-			return
-		}
-		for i, j := range record {
-			if value, err := strconv.ParseFloat(j, 64); err == nil {
-				data[i+1] = append(data[i+1], value)
-			} else {
-				return
-			}
-		}
-		row++
-	}
+//     return h_argmax
 
-	data[0] = make([]float64, row)
-	for i := 0; i < row; i++ {
-		data[0][i] = 1
-	}
-
-	//assign orig data
-	orign = make([][]float64, cols)
-	for i := 0; i < cols; i++ {
-		orign[i] = make([]float64, row)
-		copy(orign[i], data[i+1])
-	}
-
-	if normalize {
-		// ones line & y line dont need feature normalize
-		for i := 1; i < cols; i++ {
-			m := stat.Mean(data[i], nil)
-			s := stat.StdDev(data[i], nil)
-			floats.AddConst(-1*m, data[i])
-			if s != 0.0 {
-				floats.Scale(1/s, data[i])
-			}
-		}
-		X = mat.NewDense(row, cols, nil)
-		for i := 0; i < cols; i++ {
-			X.SetCol(i, data[i])
-		}
-	} else {
-		X = mat.NewDense(row, cols, nil)
-		for i := 0; i < cols; i++ {
-			X.SetCol(i, data[i])
-		}
-	}
-
-	Y = mat.NewVecDense(row, data[cols])
-
-	return
-
-}
+// y_pred = predict_all(data['X'], all_theta)
+// correct = [1 if a == b else 0 for (a, b) in zip(y_pred, data['y'])]
+// accuracy = (sum(map(int, correct)) / float(len(correct)))
+// print ('accuracy = {0}%'.format(accuracy * 100))

@@ -7,6 +7,8 @@ import (
 	"image/color"
 	"math"
 
+	"gonum.org/v1/gonum/floats"
+
 	"os"
 
 	"gonum.org/v1/gonum/mat"
@@ -377,26 +379,49 @@ func myNewScatter(sdata plotter.XYZs) (s *plotter.Scatter, err error) {
 
 // }
 
-func NewGray(r, c int, data []float64) {
-	// 图片大小
-	const size = 300
-	// 根据给定大小创建灰度图
+func SaveScatterToImage(outfileName string, r, c int, data []float64) (err error) {
+	p, err := plot.New()
+	if err != nil {
+		panic(err)
+	}
+	//p.Title.Text = "A Logo"
+
+	img, err := NewGray(r, c, data)
+	if err != nil {
+		return
+	}
+
+	p.Add(img)
+
+	err = p.Save(5*vg.Centimeter, 5*vg.Centimeter, outfileName+".png")
+
+	return
+}
+
+// NewGray create a plotter image from scatter data
+func NewGray(r, c int, data []float64) (img *plotter.Image, err error) {
+	if r*c != len(data) {
+		err = errors.New("wrong scatter size")
+		return
+	}
+
 	pic := image.NewGray(image.Rect(0, 0, r, c))
-	// 遍历每个像素
-	//灰度图是一种常见的图片格式，一般情况下颜色由 8 位组成，灰度范围为 0～255，0 表示黑色，255 表示白色。
+	// assign backgroud to white
 	for x := 0; x < r; x++ {
 		for y := 0; y < c; y++ {
-			// 填充为白色
 			pic.SetGray(x, y, color.Gray{255})
 		}
 	}
-	// 从0到最大像素生成x坐标
+
+	min, max := floats.Min(data), floats.Max(data)
+	grayScope := max - min
 	for x := 0; x < r; x++ {
-		// 让sin的值的范围在0~2Pi之间
-		s := float64(x) * 2 * math.Pi / size
-		// sin的幅度为一半的像素。向下偏移一半像素并翻转
-		y := r/2 - math.Sin(s)*r/2
-		// 用黑色绘制sin轨迹
-		pic.SetGray(x, int(y), color.Gray{0})
+		for y := 0; y < c; y++ {
+			// scaling data to 0~255
+			d := 255 - math.Round(255*(data[x*c+y]-min)/grayScope)
+			pic.SetGray(x, y, color.Gray{uint8(d)})
+		}
 	}
+	img = plotter.NewImage(pic, 0, 0, float64(r), float64(c))
+	return
 }
