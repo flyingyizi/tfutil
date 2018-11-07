@@ -21,8 +21,6 @@ func TestComputeCost(t *testing.T) {
 	ones := mat.NewVecDense(or, csvdata.Ones(or))
 	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
-	//	X, Y, _ := CsvToDense("ex2data1.txt", false)
-
 	_, rc := X.Dims()
 	theta1 := mat.NewVecDense(rc, nil)
 

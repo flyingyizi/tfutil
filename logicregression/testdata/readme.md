@@ -1,5 +1,4 @@
-
-
+# introduction
 
 - covert mat file to csv
 
@@ -14,7 +13,6 @@
     X=pd.DataFrame(data['X'])
     y=pd.DataFrame(data['y'])
 
-    X.to_csv('Xex3data1.txt',header=False,index=False) 
-    y.to_csv('yex3data1.txt',header=False,index=False) 
+    X.to_csv('Xex3data1.txt',header=False,index=False)
+    y.to_csv('yex3data1.txt',header=False,index=False)
     ```
-

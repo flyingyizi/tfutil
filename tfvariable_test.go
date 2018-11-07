@@ -24,23 +24,23 @@ func TestArgMax(t *testing.T) {
 	// #[2 2]
 
 	var (
-		root       = op.NewScope()
-		axis_row   = op.Const(root.SubScope("input"), int32(1)) //axis：0表示按列，1表示按行
-		axis_colum = op.Const(root.SubScope("input"), int32(0))
+		root      = op.NewScope()
+		axisRow   = op.Const(root.SubScope("input"), int32(1)) //axis：0表示按列，1表示按行
+		axisColum = op.Const(root.SubScope("input"), int32(0))
 	)
 
 	testdata := [][][]int32{{{1, 2, 3}, {4, 5, 6}}, {{2, 2, 2}, {2, 2, 2}}}
 
-	row_outputlist := make([]tf.Output, 0)
-	colum_outputlist := make([]tf.Output, 0)
+	rowOutputlist := make([]tf.Output, 0)
+	columOutputlist := make([]tf.Output, 0)
 
 	fmt.Println("orig testdata:")
 	for i, test := range testdata {
 		fmt.Println("	", i, " testdata:", test)
-		x := op.ArgMax(root.SubScope("input"), op.Const(root.SubScope("input"), test), axis_row)
-		row_outputlist = append(row_outputlist, x)
-		y := op.ArgMax(root.SubScope("input"), op.Const(root.SubScope("input"), test), axis_colum)
-		colum_outputlist = append(colum_outputlist, y)
+		x := op.ArgMax(root.SubScope("input"), op.Const(root.SubScope("input"), test), axisRow)
+		rowOutputlist = append(rowOutputlist, x)
+		y := op.ArgMax(root.SubScope("input"), op.Const(root.SubScope("input"), test), axisColum)
+		columOutputlist = append(columOutputlist, y)
 	}
 
 	graph, err := root.Finalize()
@@ -53,7 +53,7 @@ func TestArgMax(t *testing.T) {
 	}
 
 	fmt.Println("ArgMax by row:")
-	if output, err := sess.Run(nil, row_outputlist, nil); err != nil {
+	if output, err := sess.Run(nil, rowOutputlist, nil); err != nil {
 		panic(err)
 	} else {
 		for i, j := range output {
@@ -61,7 +61,7 @@ func TestArgMax(t *testing.T) {
 		}
 	}
 	fmt.Println("ArgMax by colum:")
-	if output, err := sess.Run(nil, colum_outputlist, nil); err != nil {
+	if output, err := sess.Run(nil, columOutputlist, nil); err != nil {
 		panic(err)
 	} else {
 		for i, j := range output {
@@ -149,7 +149,7 @@ func TestTruncatedNormal(t *testing.T) {
 		root = op.NewScope()
 	)
 
-	testdata_withoutseed := []tf.Output{
+	testdataWithoutSeed := []tf.Output{
 		op.RandomStandardNormal(root.SubScope("input"),
 			op.Const(root.SubScope("input"), []int32{2, 2}),
 			tf.Float /* ,	op.RandomStandardNormalSeed(1) */),
@@ -157,7 +157,7 @@ func TestTruncatedNormal(t *testing.T) {
 			op.Const(root.SubScope("input"), []int32{2, 2}),
 			tf.Float),
 	}
-	testdata_withseed := []tf.Output{
+	testdataWithSeed := []tf.Output{
 		op.RandomStandardNormal(root.SubScope("input"),
 			op.Const(root.SubScope("input"), []int32{2, 2}),
 			tf.Float, op.RandomStandardNormalSeed(1)),
@@ -179,7 +179,7 @@ func TestTruncatedNormal(t *testing.T) {
 	}
 
 	fmt.Println("RandomStandardNormal values without seeds:")
-	if output, err := sess.Run(nil, testdata_withoutseed, nil); err != nil {
+	if output, err := sess.Run(nil, testdataWithoutSeed, nil); err != nil {
 		panic(err)
 	} else {
 		for i, j := range output {
@@ -187,7 +187,7 @@ func TestTruncatedNormal(t *testing.T) {
 		}
 	}
 	fmt.Println("RandomStandardNormal values with seeds:")
-	if output, err := sess.Run(nil, testdata_withseed, nil); err != nil {
+	if output, err := sess.Run(nil, testdataWithSeed, nil); err != nil {
 		panic(err)
 	} else {
 		for i, j := range output {

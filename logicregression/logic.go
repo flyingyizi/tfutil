@@ -51,6 +51,7 @@ func ComputeCost(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Vector
 	return floats.Sum(t1) / float64(yr)
 }
 
+//Fhyphothesis  hyphothesis function type
 type Fhyphothesis func(X mat.Matrix, theta mat.Vector) *mat.VecDense
 
 func linearHyphothesis(X mat.Matrix, theta mat.Vector) *mat.VecDense {
@@ -59,6 +60,7 @@ func linearHyphothesis(X mat.Matrix, theta mat.Vector) *mat.VecDense {
 	return &h
 }
 
+//LogicHyphothesis output Probability of $h_\theta(x)=P(y=1|x;\theta)$
 func LogicHyphothesis(X mat.Matrix, theta mat.Vector) *mat.VecDense {
 	var h mat.VecDense
 	h.MulVec(X, theta)
@@ -93,7 +95,7 @@ func LogicHyphothesis(X mat.Matrix, theta mat.Vector) *mat.VecDense {
 
 // X shape is r x c, theta shape is c x 1, y shape is r x 1
 // GradientDescent
-func GradientDescent(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Vector, alpha float64, inters int) (otheta, cost []float64) {
+func GradientDescent(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Vector, alpha float64, inters int, outputCost bool) (otheta, cost []float64) {
 	xr, xc := X.Dims()
 	yr, _ := y.Dims()
 	tr := theta.Len()
@@ -103,8 +105,9 @@ func GradientDescent(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Ve
 	}
 
 	parameters := tr
-	cost = make([]float64, inters)
-
+	if outputCost {
+		cost = make([]float64, inters)
+	}
 	for i := 0; i < inters; i++ {
 		_error := h(X, theta)
 		_error.SubVec(_error, y)
@@ -117,7 +120,9 @@ func GradientDescent(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Ve
 		}
 
 		theta = temp
-		cost[i] = ComputeCost(LogicHyphothesis, X, y, theta)
+		if outputCost {
+			cost[i] = ComputeCost(LogicHyphothesis, X, y, theta)
+		}
 	}
 
 	otheta = make([]float64, theta.Len())
@@ -127,10 +132,9 @@ func GradientDescent(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Ve
 	return otheta, cost
 }
 
-// def predict(theta, X):
-//     probability = sigmoid(X * theta.T)
-//     return [1 if x >= 0.5 else 0 for x in probability]
-func Predict(X *mat.Dense, theta mat.Vector) []int {
+//LogisticPredict output y, if $h_\theta(x)$ >=0.5, the y will  be 1,
+//else will be 0, the $h_\theta(x)$ is $h_\theta(x)=P(y=1|x;\theta)$
+func LogisticPredict(X *mat.Dense, theta mat.Vector) []int {
 	p := LogicHyphothesis(X, theta)
 	newout := make([]int, p.Len())
 

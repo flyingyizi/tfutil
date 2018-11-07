@@ -22,8 +22,6 @@ func Test_gradientDescent(t *testing.T) {
 	ones := mat.NewVecDense(or, csvdata.Ones(or))
 	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
-	//X, Y, _ := CsvToDense("ex1data2.txt", true)
-
 	_, rc := X.Dims()
 	theta1 := mat.NewVecDense(rc, nil)
 

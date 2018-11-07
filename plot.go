@@ -20,13 +20,15 @@ import (
 	"gonum.org/v1/plot/vg/vgimg"
 )
 
-type ScaterData struct {
+//ScatterData store scatter data
+type ScatterData struct {
 	//using key to contact the xys and colors, and key will be
 	// the name of the scatter data
 	XYZsList map[string]plotter.XYZs
 }
 
-func (s *ScaterData) Add(name string, xs, ys, zs []float64) error {
+//Add add new item to scatter data list, the new item marked by name
+func (s *ScatterData) Add(name string, xs, ys, zs []float64) error {
 	if len(xs) != len(ys) || len(xs) != len(zs) {
 		return (errors.New("wrong length"))
 	}
@@ -47,7 +49,8 @@ func (s *ScaterData) Add(name string, xs, ys, zs []float64) error {
 	return nil
 }
 
-func (s *ScaterData) Del(name string) {
+//Del delete item marked by name from the catter data list
+func (s *ScatterData) Del(name string) {
 	if s.XYZsList == nil {
 		return
 	}
@@ -58,16 +61,17 @@ func (s *ScaterData) Del(name string) {
 	return
 }
 
-func (s *ScaterData) Clear() {
+//Clear clear scatter data list
+func (s *ScatterData) Clear() {
 
-	for k, _ := range s.XYZsList {
+	for k := range s.XYZsList {
 		delete(s.XYZsList, k)
 	}
 	return
 }
 
-//SaveScatter, save scatter data to png file named outfileName
-func SaveScatter(outfileName string, xys *ScaterData, thetas ...float64) {
+//SaveScatter  save scatter data to png file named outfileName
+func SaveScatter(outfileName string, xys *ScatterData, thetas ...float64) {
 	// Create a new plot, set its title and
 	// axis labels.
 	p, err := plot.New()
@@ -116,16 +120,18 @@ func SaveScatter(outfileName string, xys *ScaterData, thetas ...float64) {
 	}
 }
 
-func SaveCostLine(outfileName string, cost []float64) {
+//SaveLine  save line ,the line's X is index of slice, the Y is item's value
+//for example , <i, line[i]> is a pixel in the line
+func SaveLine(outfileName string, line []float64) {
 
-	if len(cost) < 1 {
+	if len(line) < 1 {
 		return
 	}
 
-	costData := make(plotter.XYZs, len(cost))
+	costData := make(plotter.XYZs, len(line))
 	for i := range costData {
 		costData[i].X = float64(i)
-		costData[i].Y = cost[i]
+		costData[i].Y = line[i]
 	}
 
 	// Create a new plot, set its title and
@@ -140,7 +146,6 @@ func SaveCostLine(outfileName string, cost []float64) {
 	// Draw a grid behind the data
 	p.Add(plotter.NewGrid())
 
-	// draw cost line
 	// Make a line plotter and set its style.
 	l, err := plotter.NewLine(costData)
 	if err != nil {
@@ -162,7 +167,7 @@ func SaveCostLine(outfileName string, cost []float64) {
 	}
 }
 
-//residual plots
+//SaveResidualPlot save residual plots to png file named outfileName
 func SaveResidualPlot(outfileName string, X *mat.Dense, y, theta mat.Vector) {
 
 	var h, diff mat.VecDense
@@ -236,7 +241,7 @@ func SaveResidualPlot(outfileName string, X *mat.Dense, y, theta mat.Vector) {
 }
 
 // SaveTwoScatter show two scatter plot 2 by 1
-func SaveTwoScatter(outfileName string, xys0, xys1 *ScaterData) {
+func SaveTwoScatter(outfileName string, xys0, xys1 *ScatterData) {
 	const rows, cols = 2, 1
 	plots := make([][]*plot.Plot, rows)
 	for j := 0; j < rows; j++ {
@@ -379,6 +384,9 @@ func myNewScatter(sdata plotter.XYZs) (s *plotter.Scatter, err error) {
 
 // }
 
+//SaveScatterToImage deal the data as a image matrix,
+//it will draw all of item in the data as a pixel
+//each item in the data will be dealed as the Gray intensity
 func SaveScatterToImage(outfileName string, r, c int, data []float64) (err error) {
 	p, err := plot.New()
 	if err != nil {

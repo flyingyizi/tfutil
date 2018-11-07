@@ -13,8 +13,8 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-// CsvToArray,
-// if normailize is true, it means that each colum of 'r by c' in out matrix has normalied
+// CsvToArray read csv to matrix with shape r by c
+// if normailize is true, it means that each colum of 'r by c' in "out" matrix will be normalied
 func CsvToArray(filename string, normalize bool) (r, c int, out []float64) {
 	file, err := os.Open(filename)
 
@@ -126,7 +126,7 @@ func FeatureScaling(data ...float64) []float64 {
 	return out
 }
 
-//Join, join a and b with same row
+//JoinDese join a and b with same row
 //
 func JoinDese(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
 	ar, ac := a.Dims()
@@ -174,7 +174,7 @@ func JoinDese(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
 	return poi
 }
 
-//Flatten,
+//Flatten flatten  two-dimensional array to one dimensional
 func Flatten(f [][]float64) (r, c int, d []float64) {
 	r = len(f)
 	if r == 0 {
@@ -191,6 +191,8 @@ func Flatten(f [][]float64) (r, c int, d []float64) {
 	return r, c, d
 }
 
+//Unflatten  unflatten one dimensional to two-dimensional array
+// with shape r by c
 func Unflatten(r, c int, d []float64) [][]float64 {
 	m := make([][]float64, r)
 	for i := 0; i < r; i++ {
@@ -208,6 +210,8 @@ func Eye(n int) *mat.Dense {
 	return mat.NewDense(n, n, d)
 }
 
+//Ones generate  one dimensional array with n length
+// the array filled with one
 func Ones(n int) []float64 {
 	d := make([]float64, n)
 	for i := 0; i < n; i++ {

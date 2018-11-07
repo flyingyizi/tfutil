@@ -25,7 +25,7 @@ func ExampleGradientDescent_ex1data1() {
 
 	t, cost := GradientDescent(X, &Y, theta1, 0.01, 1000)
 	//tfutil.SaveScatter("ex1data1", orig[0], orig[1], t...)
-	tfutil.SaveCostLine(filename+"cost", cost)
+	tfutil.SaveLine(filename+"cost", cost)
 
 	fmt.Println(ComputeCost(X, &Y, mat.NewVecDense(len(t), t)))
 	// Output:
@@ -48,7 +48,7 @@ func ExampleGradientDescent_ex1data2() {
 
 	t, cost := GradientDescent(X, &Y, theta1, 0.01, 1000)
 	//SaveScatter("ex1data2", orig[0], orig[1], t...)
-	tfutil.SaveCostLine(filename+"cost", cost)
+	tfutil.SaveLine(filename+"cost", cost)
 
 	theta1 = mat.NewVecDense(rc, t)
 	tfutil.SaveResidualPlot(filename+"-residual", X, &Y, theta1)
