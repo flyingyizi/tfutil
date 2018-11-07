@@ -171,20 +171,20 @@ repeat until convergence {
 在描述模型时约定标记：
 
 - **$a_j^{(i)}$代表第$i$层的第$j$个激活单元**。
-- **$\theta^{(i)}$代表第$i$层映射到第$i+1$层时权重的矩阵**
-- $g(\theta \cdot x)=a$
+- **$\Theta^{(i)}$代表第$i$层映射到第$i+1$层时权重的矩阵**
+- $g(\Theta \cdot x)=a$
 
 ```dot
 digraph neural {
     rankdir=LR;
     //rankdir=TB;
-    x1[label="x_1",width = 0.5, style = filled, fillcolor = firebrick1,group=1]
-    x2[label="x_2",width = 0.5, style = filled, fillcolor = firebrick1,group=1]
-    x3[label="x_3",width = 0.5, style = filled, fillcolor = firebrick1,group=1]
+    x1[label="x_1",style = filled, fillcolor = firebrick1,group=1]
+    x2[label="x_2",style = filled, fillcolor = firebrick1,group=1]
+    x3[label="x_3",style = filled, fillcolor = firebrick1,group=1]
 
-    a1[label="a_1^{(2)}",width = 0.5, style = filled, fillcolor = bisque1,group=2]
-    a2[label="a_2^{(2)}",width = 0.5, style = filled, fillcolor = bisque1,group=2]
-    a3[label="a_3^{(2)}",width = 0.5, style = filled, fillcolor = bisque1,group=2]
+    a1[label="a_1^{(2)}", style = filled, fillcolor = bisque1,group=2]
+    a2[label="a_2^{(2)}", style = filled, fillcolor = bisque1,group=2]
+    a3[label="a_3^{(2)}", style = filled, fillcolor = bisque1,group=2]
 
     out[label="",width = 0.5, style = filled, fillcolor = bisque1,group=3]
     h[label=<<i>h_{\theta}(x)</i>>,shape=plaintext, group=4]
