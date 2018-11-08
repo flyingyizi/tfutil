@@ -1,6 +1,6 @@
 # introduction
 
-- covert mat file to csv
+- covert ex3data1.mat mat file to csv
 
     ```python
     import numpy as np

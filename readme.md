@@ -163,6 +163,13 @@ repeat until convergence {
 
 注：在go代码示例中，没有使用$\lambda$正则惩罚系数，而是仅仅对每列数据作了特征归一化,这个后续补上。
 
+## example
+
+### 多类别分类
+
+样例代码见  [ExampleMultiClassClassification_ex3data1()](logicregression\logic_example_test.go). 训练数据*ex3data1*是数字1/2/3...的灰度强度数据。
+多分类的处理其实就是转换为二分类的组合，以训练label"1"为例，当训练label“1”时，将其他label的训练Y值设置为0概率值，然后训练出label"1"对应的参数（theta），以此类推。
+
 # Neural Networks
 
 假使在图像识别中，我们采用的都是50x50像素的小图片，并且我们将所有的像素视为特征，则会有 $2500^2 /2$个特征，如果我们要进一步将两两特征组合构成一个多项式模型，则会有约个（接近3百万个）特征。普通的逻辑回归模型，不能有效地处理这么多的特征这时候我们需要神经网络。虽然神经网络也是计算量偏大的（神经网络兴起在80年代，在90年代的后期神经网络应用减少了。但是最近，神经网络又东山再起了。其中一个原因是：神经网络是计算量有些偏大的算法。然而大概由于近些年计算机的运行速度变快，才足以真正运行起大规模的神经网络。）相比下普通的逻辑回归模型的多项式计算量更大。
@@ -172,7 +179,7 @@ repeat until convergence {
 
 - **$a_j^{(i)}$代表第$i$层的第$j$个激活单元**。
 - **$\Theta^{(i)}$代表第$i$层映射到第$i+1$层时权重的矩阵**
-- $g(\Theta \cdot x)=a$
+- $L$代表神经网络层数，$S_l$表示第$l$层的neuron个数(不包括bias unit)
 
 ```dot
 digraph neural {
@@ -203,3 +210,21 @@ digraph neural {
 ```
 
 其实神经网络就像是logistic regression，只不过我们把logistic regression中的输入向量$[x_1,x_2,...x_3]$成了中间层的$[a_1^{(2)},a_2^{(2)},...a_3^{(2)}]$,是$x$的进化体，并且它们是由$x,\theta$决定的,由于梯队下降所以$a$是变化的,并且变得越来越厉害。 这就是神经网络相比于逻辑回归和线性回归的优势。
+
+- cost function：
+  
+
+- Hypothesis function:
+
+  对于
+
+
+## example
+
+### 前向传播
+
+样例代码见[ExampleFeedForwardPrediction_ex3weights()](neuron\neuron_example_test.go),这个demo演示了通过前向神经网络来识别图片。
+另外通过普通logistics regression来识别图片的演示在前面 [ExampleMultiClassClassification_ex3data1()](logicregression\logic_example_test.go)样例代码也演示过. 
+
+对应前向传播如字面意思，就是输入->layer-1->layer-2->layer-3。。。逐层的往后，最终得到预测函数$h_{\Theta}(x)$需要的$\Theta$。这里用大写的$\Theta$，因为这是一个矩阵。
+
