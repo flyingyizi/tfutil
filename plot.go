@@ -240,52 +240,43 @@ func SaveResidualPlot(outfileName string, X *mat.Dense, y, theta mat.Vector) {
 	}
 }
 
-// SaveTwoScatter show two scatter plot 2 by 1
-func SaveTwoScatter(outfileName string, xys0, xys1 *ScatterData) {
-	const rows, cols = 2, 1
+// SaveScatters show multi scatters
+// if samePlot is true, all of scatters will be show in one plot,otherwise will be
+// show in separate plot
+func SaveScatters(outfileName string, scatters ...*ScatterData) {
+
+	rows, cols := func() (int, int) {
+		t := (len(scatters) / 2)
+		if t == 0 {
+			return 1, 1
+		} else if len(scatters) > t*2 {
+			return t + 1, 2
+		}
+		return t, 2
+	}()
+
 	plots := make([][]*plot.Plot, rows)
 	for j := 0; j < rows; j++ {
 		plots[j] = make([]*plot.Plot, cols)
-		for i := 0; i < cols; i++ {
+	}
 
-			p, err := plot.New()
+	for i, xyzs := range scatters {
+		p, err := plot.New()
+		if err != nil {
+			panic(err)
+		}
+		for name, sdata := range xyzs.XYZsList {
+			// Make a scatter plotter and set its style.
+			s, err := myNewScatter(sdata)
 			if err != nil {
 				panic(err)
 			}
-			// draw xys0 scatter data and hypothesis function
-			if i == 0 && j == 0 {
-
-				for name, sdata := range xys0.XYZsList {
-					// Make a scatter plotter and set its style.
-					s, err := myNewScatter(sdata)
-					if err != nil {
-						panic(err)
-					}
-					p.Add(s)
-					p.Legend.Add(fmt.Sprint("", name), s)
-				}
-				//p.Title =
-			}
-			// draw xys1 scatter data and hypothesis function
-			if i == 0 && j == 1 {
-				for name, sdata := range xys1.XYZsList {
-					// Make a scatter plotter and set its style.
-					s, err := myNewScatter(sdata)
-					if err != nil {
-						panic(err)
-					}
-
-					p.Add(s)
-					p.Legend.Add(fmt.Sprint("", name), s)
-				}
-			}
-
-			// make sure the horizontal scales match
-			//p.X.Min = 0
-			//			p.X.Max = 5
-
-			plots[j][i] = p
+			p.Add(s)
+			p.Legend.Add(fmt.Sprint("", name), s)
 		}
+		//i:=k*row + col
+		row, col := i/2, i%2
+		plots[row][col] = p
 	}
 
 	img := vgimg.New(vg.Points(450), vg.Points(575))
