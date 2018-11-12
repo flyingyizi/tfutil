@@ -9,7 +9,7 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-func ExampleGradientDescent_ex1data1() {
+func ExampleBGD_ex1data1() {
 	filename := "ex1data1.txt"
 	orig := mat.NewDense(csvdata.CsvToArray("testdata/"+filename, true))
 	or, oc := orig.Dims()
@@ -23,8 +23,7 @@ func ExampleGradientDescent_ex1data1() {
 	_, xc := X.Dims()
 	theta1 := mat.NewVecDense(xc, nil)
 
-	t, cost := GradientDescent(X, &Y, theta1, 0.01, 1000)
-	//tfutil.SaveScatter("ex1data1", orig[0], orig[1], t...)
+	t, cost := BGD(X, &Y, theta1, 0.01, 1000)
 	tfutil.SaveLine(filename+"cost", cost)
 
 	fmt.Println(ComputeCost(X, &Y, mat.NewVecDense(len(t), t)))
@@ -32,7 +31,7 @@ func ExampleGradientDescent_ex1data1() {
 	// 0.14744830407944606
 }
 
-func ExampleGradientDescent_ex1data2() {
+func ExampleBGD_ex1data2() {
 	filename := "ex1data2.txt"
 	orig := mat.NewDense(csvdata.CsvToArray("testdata/"+filename, true))
 	or, oc := orig.Dims()
@@ -46,7 +45,7 @@ func ExampleGradientDescent_ex1data2() {
 	_, rc := X.Dims()
 	theta1 := mat.NewVecDense(rc, nil)
 
-	t, cost := GradientDescent(X, &Y, theta1, 0.01, 1000)
+	t, cost := BGD(X, &Y, theta1, 0.01, 1000)
 	//SaveScatter("ex1data2", orig[0], orig[1], t...)
 	tfutil.SaveLine(filename+"cost", cost)
 

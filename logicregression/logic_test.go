@@ -12,14 +12,18 @@ import (
 
 func TestComputeCost(t *testing.T) {
 	filename := "ex2data1.txt"
-	orig := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", filename), false))
-	or, oc := orig.Dims()
-	// assign Y
-	var Y mat.VecDense
-	Y.CloneVec(orig.ColView(oc - 1))
-	// assign Y
-	ones := mat.NewVecDense(or, csvdata.Ones(or))
-	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+	//load traning data
+	X, Y := func() (x *mat.Dense, y *mat.VecDense) {
+		orig := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", filename), false))
+		or, oc := orig.Dims()
+		// assign Y
+		var Y mat.VecDense
+		Y.CloneVec(orig.ColView(oc - 1))
+		// assign X
+		ones := mat.NewVecDense(or, csvdata.Ones(or))
+		X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+		return X, &Y
+	}()
 
 	_, rc := X.Dims()
 	theta1 := mat.NewVecDense(rc, nil)
@@ -36,7 +40,7 @@ func TestComputeCost(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{name: "11",
-			args: args{X: X, y: &Y, theta: theta1},
+			args: args{X: X, y: Y, theta: theta1},
 			want: 0.6931471805599458},
 	}
 	for _, tt := range tests {

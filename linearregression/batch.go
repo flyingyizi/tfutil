@@ -4,14 +4,8 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-// ComputeCost compute cost for [X,y]
-// X shape is r x c, thea shape is c x 1, y shape is r x 1
-// the algorithm is same as below python function
-// ```python
-// def computeCost(X, y, theta):
-//     inner = np.power(((X * theta.T) - y), 2)
-//     return np.sum(inner) / (2 * len(X))
-// ```
+// ComputeCost compute cost linear regression
+// $$J(\theta)=\frac{1}{2m} \sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2 $$
 func ComputeCost(X *mat.Dense, y, theta mat.Vector) float64 {
 	xr, xc := X.Dims()
 	yr, yc := y.Dims()
@@ -31,29 +25,8 @@ func ComputeCost(X *mat.Dense, y, theta mat.Vector) float64 {
 	return sum
 }
 
-// ```python
-// # https://github.com/fengdu78/Coursera-ML-AndrewNg-Notes
-// def gradientDescent(X, y, theta, alpha, iters):
-//     temp = np.matrix(np.zeros(theta.shape))
-//     parameters = int(theta.ravel().shape[1])
-//     cost = np.zeros(iters)
-
-//     for i in range(iters):
-//         error = (X * theta.T) - y
-
-//         for j in range(parameters):
-//             term = np.multiply(error, X[:,j])
-//             temp[0,j] = theta[0,j] - ((alpha / len(X)) * np.sum(term))
-
-//         theta = temp
-//         cost[i] = ComputeCost(X, y, theta)
-
-//     return theta, cost
-// ```
-
-// X shape is r x c, theta shape is c x 1, y shape is r x 1
-// GradientDescent
-func GradientDescent(X *mat.Dense, y, theta mat.Vector, alpha float64, inters int) (otheta, cost []float64) {
+// BGD batch gradient descent for linear regression
+func BGD(X *mat.Dense, y, theta mat.Vector, alpha float64, inters int) (otheta, cost []float64) {
 	var _error /* , term */ mat.VecDense
 
 	xr, xc := X.Dims()

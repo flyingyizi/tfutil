@@ -8,94 +8,87 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-//ComputeCost , with special theta to compute the cost
-//: $$J(\theta)=\frac{1}{2m} \sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2 $$
+//ComputeCost , computer logistic regression cost
+//$$J(\theta)=\frac{1}{m} \sum_{i=1}^{m} \left[  -y^{(i)} \times log(h_{\theta}(x^{(i)})) - (1-y^{(i)}) \times log(1- h_{\theta}(x^{(i)}))  \right] $$
 func ComputeCost(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Vector) float64 {
-	xr, xc := X.Dims()
-	yr, yc := y.Dims()
-	tr := theta.Len()
 
-	if xr != yr || xc != tr || yc != 1 {
-		panic(mat.ErrShape)
-	}
-
-	var xtheta mat.VecDense
-	xtheta.MulVec(X, theta)
-
-	hyph := h(X, theta)
-
-	array, t1, t2 := make([]float64, hyph.Len()), make([]float64, xtheta.Len()), make([]float64, xtheta.Len())
-	copy(array, xtheta.RawVector().Data)
-	for i := 0; i < xr; i++ {
-		array[i] = math.Log(hyph.AtVec(i))
-	}
-	floats.MulTo(t1, y.RawVector().Data, array)
-	floats.Scale(-1, t1)
-
-	//calc second
-	for i := 0; i < xr; i++ {
-		array[i] = math.Log(1 - hyph.AtVec(i))
-	}
-	ones := func() []float64 {
-		data := make([]float64, yr)
-		for i := 0; i < yr; i++ {
-			data[i] = 1
-		}
-		return data
+	// $log(h_{\theta}(x^{(i)})$
+	H := func() *mat.Dense {
+		a := h(X, theta)
+		return a
 	}()
-	floats.Sub(ones, y.RawVector().Data)
-	floats.MulTo(t2, ones, array)
 
-	//     return np.sum(first - second) / (len(X))
-	floats.Sub(t1, t2)
-	return floats.Sum(t1) / float64(yr)
+	//  $-y^{(i)} \times log(h_{\theta}(x^{(i)}))$
+	first := func() *mat.Dense {
+		var logH mat.Dense
+
+		logH.Apply(
+			func(i, j int, v float64) float64 {
+				return math.Log(v)
+			}, H)
+
+		var a mat.Dense
+		a.MulElem(y, &logH)
+		a.Apply(
+			func(i, j int, v float64) float64 {
+				return -v
+			}, &a)
+		return &a
+	}()
+
+	// $(1-y^{(i)}) \times log(1- h_{\theta}(x^{(i)})$
+	second := func() *mat.Dense {
+		var a mat.Dense
+
+		a.Apply(
+			func(i, j int, v float64) float64 {
+				return math.Log(1 - v)
+			}, H)
+
+		var b mat.Dense
+		b.MulElem(y, &a)
+
+		a.Sub(&a, &b)
+		return &a
+	}()
+
+	// $\frac{1}{m} \sum_{i=1}^{m} \left[ first - second \right]$
+	result := func() float64 {
+		first.Sub(first, second)
+
+		m, _ := first.Dims()
+		sum := floats.Sum(first.RawMatrix().Data)
+		sum = sum / float64(m)
+
+		return sum
+	}()
+
+	return result
 }
 
 //Fhyphothesis  hyphothesis function type
-type Fhyphothesis func(X mat.Matrix, theta mat.Vector) *mat.VecDense
-
-func linearHyphothesis(X mat.Matrix, theta mat.Vector) *mat.VecDense {
-	var h mat.VecDense
-	h.MulVec(X, theta)
-	return &h
-}
+type Fhyphothesis func(X mat.Matrix, theta mat.Matrix) *mat.Dense
 
 //LogicHyphothesis output Probability of $h_\theta(x)=P(y=1|x;\theta)$
-func LogicHyphothesis(X mat.Matrix, theta mat.Vector) *mat.VecDense {
-	var h mat.VecDense
-	h.MulVec(X, theta)
+// the theta shape must be any by 1
+func LogicHyphothesis(X mat.Matrix, theta mat.Matrix) *mat.Dense {
 
-	for i := 0; i < h.Len(); i++ {
-		t := 1 / (1 + math.Exp(-h.AtVec(i)))
-		h.SetVec(i, t)
+	if _, thetac := theta.Dims(); thetac != 1 {
+		panic("wrong theta size")
 	}
 
+	var h mat.Dense
+	h.Mul(X, theta)
+	h.Apply(
+		func(i, j int, v float64) float64 {
+			t := 1.0 / (1.0 + math.Exp(-v))
+			return t
+		}, &h)
 	return &h
 }
 
-// ```python
-// # https://github.com/fengdu78/Coursera-ML-AndrewNg-Notes
-// def gradientDescent(X, y, theta, alpha, iters):
-//     temp = np.matrix(np.zeros(theta.shape))
-//     parameters = int(theta.ravel().shape[1])
-//     cost = np.zeros(iters)
-
-//     for i in range(iters):
-//         error = (X * theta.T) - y
-
-//         for j in range(parameters):
-//             term = np.multiply(error, X[:,j])
-//             temp[0,j] = theta[0,j] - ((alpha / len(X)) * np.sum(term))
-
-//         theta = temp
-//         cost[i] = ComputeCost(X, y, theta)
-
-//     return theta, cost
-// ```
-
-// X shape is r x c, theta shape is c x 1, y shape is r x 1
-// GradientDescent
-func GradientDescent(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Vector, alpha float64, inters int, outputCost bool) (otheta, cost []float64) {
+// BGD batch gradient descent for logistic regression
+func BGD(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Vector, alpha float64, inters int, outputCost bool) (otheta, cost []float64) {
 	xr, xc := X.Dims()
 	yr, _ := y.Dims()
 	tr := theta.Len()
@@ -110,11 +103,11 @@ func GradientDescent(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Ve
 	}
 	for i := 0; i < inters; i++ {
 		_error := h(X, theta)
-		_error.SubVec(_error, y)
+		_error.Sub(_error, y)
 
 		temp := mat.NewVecDense(tr, nil)
 		for j := 0; j < parameters; j++ {
-			sum := mat.Dot(_error, X.ColView(j))
+			sum := mat.Dot(_error.ColView(0), X.ColView(j))
 			sum = (float64(alpha) / float64(xr)) * sum
 			temp.SetVec(j, theta.AtVec(j)-sum)
 		}
@@ -134,17 +127,23 @@ func GradientDescent(h Fhyphothesis, X *mat.Dense, y *mat.VecDense, theta mat.Ve
 
 //LogisticPredict output y, if $h_\theta(x)$ >=0.5, the y will  be 1,
 //else will be 0, the $h_\theta(x)$ is $h_\theta(x)=P(y=1|x;\theta)$
-func LogisticPredict(X *mat.Dense, theta mat.Vector) []int {
+func LogisticPredict(X *mat.Dense, theta mat.Vector) []float64 {
 	p := LogicHyphothesis(X, theta)
-	newout := make([]int, p.Len())
+	pr, _ := p.Dims()
 
-	for i := 0; i < p.Len(); i++ {
-		if p.AtVec(i) >= 0.5 {
-			newout[i] = 1
-		} else {
-			newout[i] = 0
-		}
-	}
+	newout := make([]float64, pr)
+
+	p.Apply(
+		func(i, j int, v float64) float64 {
+			if v >= 0.5 {
+				return 1
+			}
+			return 0
+
+		}, p)
+
+	copy(newout, p.RawMatrix().Data)
+
 	return newout
 }
 

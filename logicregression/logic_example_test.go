@@ -4,12 +4,40 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/flyingyizi/tfutil"
+
 	"github.com/flyingyizi/tfutil/csvdata"
 	. "github.com/flyingyizi/tfutil/logicregression"
 
 	"gonum.org/v1/gonum/floats"
 	"gonum.org/v1/gonum/mat"
 )
+
+func ExampleComputeCost() {
+
+	filename := "ex2data1.txt"
+	//load traning data
+	X, Y := func() (x *mat.Dense, y *mat.VecDense) {
+		orig := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", filename), false))
+		or, oc := orig.Dims()
+		// assign Y
+		var Y mat.VecDense
+		Y.CloneVec(orig.ColView(oc - 1))
+		// assign X
+		ones := mat.NewVecDense(or, csvdata.Ones(or))
+		X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+		return X, &Y
+	}()
+
+	_, rc := X.Dims()
+	theta1 := mat.NewVecDense(rc, nil)
+
+	_, cost := BGD(LogicHyphothesis, X, Y, theta1, 0.001, 100, true)
+
+	tfutil.SaveLine(filename+"cost", cost)
+	//output:
+	//
+}
 
 func ExampleMultiClassClassification_ex3data1() {
 	filename := "ex3data1.txt"
@@ -37,7 +65,7 @@ func ExampleMultiClassClassification_ex3data1() {
 		}
 		Y_i := mat.NewVecDense(len(Y), y_i)
 
-		newtheta, _ := GradientDescent(LogicHyphothesis, X, Y_i, theta1, 0.001, 100, false)
+		newtheta, _ := BGD(LogicHyphothesis, X, Y_i, theta1, 0.001, 100, false)
 		allTheta[label] = newtheta
 	}
 
@@ -45,7 +73,8 @@ func ExampleMultiClassClassification_ex3data1() {
 	for k, v := range allTheta {
 
 		result := LogicHyphothesis(X, mat.NewVecDense(len(v), v))
-		index := floats.MaxIdx(result.RawVector().Data)
+
+		index := floats.MaxIdx(result.RawMatrix().Data)
 
 		//k is the label
 		if k != Y[index] {

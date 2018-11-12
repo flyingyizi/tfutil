@@ -159,7 +159,7 @@ func SaveLine(outfileName string, line []float64) {
 
 	// Add the plotters to the plot, with a legend
 	// entry for each
-	p.Legend.Add("hypothesis", l)
+	//p.Legend.Add("hypothesis", l)
 
 	// Save the plot to a PNG file.
 	if err := p.Save(4*vg.Inch, 4*vg.Inch, outfileName+".png"); err != nil {

@@ -24,7 +24,8 @@ NG(吴恩达)建议：如果使用Octave作为编程环境，如果使用Octave�
 模型所预测的值与训练集中实际值之间的差距就是建模误差（modeling error）,通常定义代价函数采用平方误差代价函数：
 $$J(\theta)=\frac{1}{2m} \sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2 $$
 
-   - 注：这是linear regression的代价函数，不适合类似logistics regression，因为logistic regression的$h_\theta$是一个非线性的，导致对应$J_\theta$会是非凸函数。
+- 注：这是linear regression的代价函数，不适合类似logistics regression，因为logistic regression的$h_\theta$是一个非线性的，导致对应$J_\theta$会是非凸函数。
+
 对于凸函数，特征就是求导是单调的，从$z^2$函数的下面图形明显可以看出它是一个凸函数。
 
 ```gnuplot {cmd=true output="html" }
@@ -32,21 +33,23 @@ set terminal svg
 set size ratio 0.5
 set xrange [-1:1]
 f(x,x0) = 2*(x0) * ((x)-(x0)) + (x0**2)
-set arrow from  0.7,f(0.7,0.6) to  0.5, f(0.5,0.6) 
-set arrow from   -0.7,f(-0.7,-0.6)  to -0.5, f(-0.5,-0.6) 
-set arrow from   -0.4,f(-0.4,-0.3)  to -0.2, f(-0.2,-0.3) 
+set arrow from  0.7,f(0.7,0.6) to  0.5, f(0.5,0.6)
+set arrow from   -0.7,f(-0.7,-0.6)  to -0.5, f(-0.5,-0.6)
+set arrow from   -0.4,f(-0.4,-0.3)  to -0.2, f(-0.2,-0.3)
 plot x**2
 ```
-
 
 目标就是找到适合的$\theta$,使得 $minimize(J(\theta)) $
 
 梯度下降背后的思想是：开始时我们随机选择一个参数的组合，计算代价函数，然后我们寻找下一个能让代价函数值下降最多的参数组合。我们持续这么做直到到到一个局部最小值（local minimum），因为我们并没有尝试完所有的参数组合，所以不能确定我们得到的局部最小值是否便是全局最小值（global minimum），选择不同的初始参数组合，可能会找到不同的局部最小值。
 
-批量梯度下降（batch gradient descent）算法的公式为：
-repeat until convergence {
+每个参数$\theta_i$的梯度负方向在数学上就是对各个$\theta_i$求偏导。
+
+
+梯度下降算法的公式为：
+**repeat until convergence  {**
 $$\theta_j:=\theta_j - \alpha \frac{\partial}{\partial \theta_j}J(\theta)$$
-}
+**}**
 其中$\alpha$是学习率（learning rate），它决定了我们沿着能让代价函数下降程度最大的方向向下迈出的步子有多大，在批量梯度下降中，我们每一次都同时让所有的参数减去学习速率乘以代价函数的导数。
 
 在公式中为什么是“-”负号，而不是“+”号，这个从上面凸函数的图形可以直观的理解。在0右侧，求导会是一个正值，减去它就是向低点靠近（x向左）；而在0左侧，求导会是负的，负负为正效果也是向低点靠近（x向右）
@@ -61,6 +64,43 @@ $$\theta_j:=\theta_j - \alpha \frac{\partial}{\partial \theta_j}J(\theta)$$
 假设你将$\theta$初始化在局部最低点，在这儿，它已经在一个局部的最优处或局部最低点。结果是局部最优点的导数将等于零，因为它是那条切线的斜率。这意味着你已经在局部最优点，它使得$\theta$不再改变，也就是新$\theta$的等于原来的$\theta$，因此，如果你的参数已经处于局部最低点，那么梯度下降法更新其实什么都没做，它不会改变参数的值。这也解释了为什么即使学习速率保持不变时，梯度下降也可以收敛到局部最低点。
 
 这就是梯度下降算法，你可以用它来最小化任何代价函数$J$，不只是线性回归中的代价函数$J$。
+
+## 批量梯度BGD（batch gradient descent）
+
+它的具体思路是在更新每一参数(也称为$\theta$)时都使用所有的样本来进行更新.采用**最小化风险函数**，所以按照每个参数$\theta_i$的梯度负方向来更新每个$\theta_i$
+
+对于梯度算法中的$ \frac{\partial}{\partial \theta_j}J(\theta)$，在批量梯度下降中是
+$$\alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j - \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
+
+推导过程就是取偏导的过程，在后面的线性回归中描述了推导过程。
+
+## 随机梯度下降法SGD(Stochastic Gradient Descent)
+
+由于批量梯度下降法在更新每一个参数时，都需要所有的训练样本，所以训练过程会随着样本数量的加大而变得异常的缓慢。随机梯度下降法（简称SGD）正是为了解决批量梯度下降法这一弊端而提出的。
+
+它是利用每个样本的损失函数对θ求偏导得到对应的梯度，来更新θ，而不是对所有样本损失最小化。
+
+随机梯度下降是通过每个样本来迭代更新一次，如果样本量很大的情况（例如几十万），那么可能只用其中几万条或者几千条的样本，就已经将theta迭代到最优解了，对比上面的批量梯度下降，迭代一次需要用到十几万训练样本，一次迭代不可能最优，如果迭代10次的话就需要遍历训练样本10次。但是，SGD伴随的一个问题是噪音较BGD要多，使得SGD并不是每次迭代都向着整体最优化方向。
+
+- 优点：训练速度快；
+
+- 缺点：准确度下降，并不是全局最优；不易于并行实现。
+
+对于梯度算法中的$ \frac{\partial}{\partial \theta_j}J(\theta)$，在批量梯度下降中是
+$$\alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j -  (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
+
+```python
+for i in range(nb_epochs):
+  params_grad = evaluate_gradient(loss_function, data, params)
+  params = params - learning_rate * params_grad
+```  
+
+## 小批量梯度下降法MBGD（Mini-batch Gradient Descent）
+
+它是BGD/SGD方式的折衷，MBGD在每次更新参数时使用b个样本（b一般为10），使得b个样本最小化损失。
+
+对于梯度算法中的$ \frac{\partial}{\partial \theta_j}J(\theta)$，在批量梯度下降中是
+$$\alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j - \frac{1}{2m} \sum_{i=k}^{k+b} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
 
 # csvdata package
 
@@ -218,18 +258,15 @@ digraph neural {
 
 - cost function：
   
-
 - Hypothesis function:
 
   对于
-
 
 ## example
 
 ### 前向传播
 
 样例代码见[ExampleFeedForwardPrediction_ex3weights()](neuron\neuron_example_test.go),这个demo演示了通过前向神经网络来识别图片。
-另外通过普通logistics regression来识别图片的演示在前面 [ExampleMultiClassClassification_ex3data1()](logicregression\logic_example_test.go)样例代码也演示过. 
+另外通过普通logistics regression来识别图片的演示在前面 [ExampleMultiClassClassification_ex3data1()](logicregression\logic_example_test.go)样例代码也演示过.
 
 对应前向传播如字面意思，就是输入->layer-1->layer-2->layer-3。。。逐层的往后，最终得到预测函数$h_{\Theta}(x)$需要的$\Theta$。这里用大写的$\Theta$，因为这是一个矩阵。
-

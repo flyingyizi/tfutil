@@ -25,7 +25,7 @@ func Test_gradientDescent(t *testing.T) {
 	_, rc := X.Dims()
 	theta1 := mat.NewVecDense(rc, nil)
 
-	// 	//k, _ := GradientDescent(X, y, theta, 0.01, 1000 /* alpha float64, inters int */)
+	// 	//k, _ := BGD(X, y, theta, 0.01, 1000 /* alpha float64, inters int */)
 	// 	//fk := mat.Formatted(k, mat.Prefix("    "), mat.Squeeze())
 	// 	//fmt.Println(fk)
 
@@ -52,13 +52,13 @@ func Test_gradientDescent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotOtheta, gotCost := GradientDescent(tt.args.X, tt.args.y, tt.args.theta, tt.args.alpha, tt.args.inters)
+			gotOtheta, gotCost := BGD(tt.args.X, tt.args.y, tt.args.theta, tt.args.alpha, tt.args.inters)
 			if !reflect.DeepEqual(gotOtheta, tt.wantOtheta) {
-				t.Errorf("GradientDescent() gotOtheta = %v, want %v", gotOtheta, tt.wantOtheta)
+				t.Errorf("BGD() gotOtheta = %v, want %v", gotOtheta, tt.wantOtheta)
 			}
 
 			if !reflect.DeepEqual(gotCost, tt.wantCost) {
-				//t.Errorf("GradientDescent() gotCost = %v, want %v", gotCost, tt.wantCost)
+				//t.Errorf("BGD() gotCost = %v, want %v", gotCost, tt.wantCost)
 			}
 		})
 	}
