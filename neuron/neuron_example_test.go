@@ -17,8 +17,8 @@ func ExampleFeedForwardPrediction_ex3weights() {
 	//load theta
 	Theta1, Theta2 := func() (theta1, theta2 *mat.Dense) {
 		filename := "ex3weights.txt"
-		theta1 = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "Theta1"+filename), false))
-		theta2 = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "Theta2"+filename), false))
+		theta1 = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "Theta1"+filename)))
+		theta2 = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "Theta2"+filename)))
 		return
 	}()
 	fmt.Printf("Theta1's shape:")
@@ -29,8 +29,8 @@ func ExampleFeedForwardPrediction_ex3weights() {
 	//load training X and Y
 	X, Y := func() (x *mat.Dense, y []float64) {
 		filename := "ex3data1.txt"
-		x = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "X"+filename), false))
-		_, _, y = csvdata.CsvToArray(path.Join("testdata", "y"+filename), false)
+		x = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "X"+filename)))
+		_, _, y = csvdata.CsvToArray(path.Join("testdata", "y"+filename))
 		return
 	}()
 	fmt.Printf("X's shape:")
@@ -41,7 +41,7 @@ func ExampleFeedForwardPrediction_ex3weights() {
 	//layer-1 a1:= [ones, X], it is neuron input
 	a1 := func() *mat.Dense {
 		xr, _ := X.Dims()
-		z := csvdata.JoinDese(mat.NewVecDense(xr, csvdata.Ones(xr)), X)
+		z := csvdata.HorizJoinDense(mat.NewVecDense(xr, csvdata.Ones(xr)), X)
 		return z
 	}()
 	fmt.Printf("a1's shape:")
@@ -66,7 +66,7 @@ func ExampleFeedForwardPrediction_ex3weights() {
 	a3 := func() *mat.Dense {
 		a2r, _ := a2.Dims()
 		ones, norm := mat.NewVecDense(a2r, csvdata.Ones(a2r)), csvdata.FeatureScalingMatrix(a2)
-		ones_a2 := csvdata.JoinDese(ones, norm)
+		ones_a2 := csvdata.HorizJoinDense(ones, norm)
 
 		var z mat.Dense
 		z.Mul(ones_a2, Theta2.T())

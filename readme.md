@@ -5,6 +5,62 @@
 
 该repository的主要是自己学习中的一些笔记，如果能对其他人有帮助，那是额外的奖励。
 
+# 机器学习golang
+
+## gathering and organizing data
+
+- 使用数据框架操纵数据
+
+github.com/kniren/gota/dataframe  ： Once we have the data parsed into a dataframe, we can filter, subset, and select our
+data easily:
+
+
+# 线性模型 linear regression
+
+对于给定的$d$维样本$[x_1,..,x_d]^T$，它的线性组合函数为：
+$$f(X,W):=w_0+w_1 x_1+ ...+w_d x_d$$
+$$:=W^T X$$
+
+该线性组合函数也称为假设函数（Hypothesis function），也常表达为：
+   $$h_\theta(X) = \theta^T X$$
+
+- cost function：
+  $$J(\theta)=\frac{1}{2m} \sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2 $$
+  $$\theta_j:=\theta_j - \alpha \frac{\partial}{\partial \theta_j}J(\theta)$$
+
+$\frac{\partial}{\partial \theta_j}J(\theta)$的推导过程如下：
+$$\frac{\partial}{\partial \theta_j}J(\theta)=  \frac{\partial}{\partial \theta_j} \frac{1}{2m} \sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2  $$
+通过分步求导,将$(h_{\theta}(x^{(i)})-y^{(i)})$以$z$表示继续：
+$$=\frac{\partial }{\partial z} \frac{1}{2m} \sum_{i=1}^{m}(z)^{2} \frac{\partial z}{ \partial \theta_j } = \frac{1}{2m} \sum_{i=1}^{m} z \frac{\partial z}{ \partial \theta_j } $$
+
+将$z$替换回$(h_{\theta}(x^{(i)})-y^{(i)})$继续:
+$$= \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)}) \frac{\partial (h_{\theta}(x^{(i)})-y^{(i)})}{ \partial \theta_j } = \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)}  $$
+
+因此线性回归的梯队下降算法最终为：
+批量梯度下降（batch gradient descent）算法的公式为：
+repeat until convergence {
+$$\theta_j:=\theta_j - \alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j - \alpha  \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
+}
+注：$x_{j}^{(i)} $中的$i$表示第$i_{th}$个样本，$j$表示该样本中的第$j_{th}$个。
+
+上面的算法，有时也称为批量梯度下降。实际上，在机器学习中，通常不太会给算法起名字，但这个名字”批量梯度下降”，指的是在梯度下降的每一步中，我们都用到了所有的训练样本，在梯度下降中，在计算微分求导项时，我们需要进行求和运算，所以，在每一个单独的梯度下降中，我们最终都要计算这样一个东西，这个项需要对所有$m$个训练样本求和。因此，批量梯度下降法这个名字说明了我们需要考虑所有这一"批"训练样本，而事实上，有时也有其他类型的梯度下降法，不是这种"批量"型的，不考虑整个的训练集，而是每次只关注训练集中的一些小的子集。
+
+## '正则化linear regression'
+
+   高次项往往是引起过拟合的因素，因此惩罚高次项(即减小高次项的系数)往往能较好解决过拟合问题。假如我们有非常多的特征，我们并不知道其中哪些特征我们要惩罚，我们将对所有的特征进行惩罚，并且让代价函数最优化的软件来选择这些惩罚的程度。这样的结果是得到了一个较为简单的能防止过拟合问题的假设： 引入正则化参数$ \lambda$ ,新的linear regression的cost function就是下面的这样的样子：
+  $$J(\theta)=\frac{1}{2m} [\sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2 +\lambda \sum_{j=1}^{m} \theta_{j}^{2}]$$
+
+显然对应的梯度下降应该是：
+repeat until convergence {
+   ${\theta_0}:={\theta_0}-a\frac{1}{m}\sum\limits_{i=1}^{m}{(({h_\theta}({{x}^{(i)}})-{{y}^{(i)}})x_{0}^{(i)}})$
+
+   ${\theta_j}:={\theta_j}-a[\frac{1}{m}\sum\limits_{i=1}^{m}{(({h_\theta}({{x}^{(i)}})-{{y}^{(i)}})x_{j}^{\left( i \right)}}+\frac{\lambda }{m}{\theta_j}]$
+​
+   $for$ $j=1,2,...n$
+}
+
+注：在go代码示例中，没有使用$\lambda$正则惩罚系数，而是仅仅对每列数据作了特征归一化,这个后续补上。
+
 # introduction
 
 目前存在几种不同类型的学习算法。主要的两种类型被我们称之为监督学习和无监督学习。简单来说，监督学习这个想法是指，我们将教计算机如何去完成任务，而在无监督学习中，我们打算让它自己进行学习。此外还有诸如，强化学习和推荐系统等各种术语。这些都是机器学习算法的一员，以后我们都将介绍到，但学习算法最常用两个类型就是监督学习、无监督学习。
@@ -43,8 +99,18 @@ plot x**2
 
 梯度下降背后的思想是：开始时我们随机选择一个参数的组合，计算代价函数，然后我们寻找下一个能让代价函数值下降最多的参数组合。我们持续这么做直到到到一个局部最小值（local minimum），因为我们并没有尝试完所有的参数组合，所以不能确定我们得到的局部最小值是否便是全局最小值（global minimum），选择不同的初始参数组合，可能会找到不同的局部最小值。
 
-每个参数$\theta_i$的梯度负方向在数学上就是对各个$\theta_i$求偏导。
+梯度下降即通过迭代的方法来计算训练集$D$ 上风险函数的最小值。风险函数$R$也常常称为代价函数$costFunction$,下式中的$\alpha$是学习率。 下式为采用批量梯度（BSD）方法，因为在每次迭代都计算所有样本的损失
+$$\theta_{t+1}:=\theta_{t} - \alpha \frac{\partial R_D (\theta)}{\partial \theta} := \theta_{t} - \alpha \frac{1}{m} \sum_{i=1}^{m} \frac{\partial (J(y^{(i)},h(x^{(i)},\theta)))}{\partial \theta}$$
 
+如果在每次迭代只是采集一个样本，计算并更新梯度那就是随机梯度下降法（SGD），数学家已经证明当经过足够次数的迭代时，SGD也可以收敛到局部最优解。 SGD的训练过程的更新是下式，其中$(x^{(i)},y^{(i)})$是在某次迭代中随机选择的样本：
+$$\theta_{t+1}:=\theta_{t} - \alpha \frac{\partial R_D (\theta)}{\partial \theta} := \theta_{t} - \alpha  \frac{\partial (J(y^{(i)},h(x^{(i)},\theta)))}{\partial \theta}$$
+
+批量梯度下降和随机梯度下降之间的区别在于每次迭代的优化目标是对所有样本的平均损失函数还是单个样本的损失函数。随机梯度下降因为实现简单，收敛速度也非常快，因此使用非常广泛。随机梯度下降相当于在批量梯度下降
+的梯度上引入了随机噪声。当目标函数非凸时，反而可以使其逃离局部最优点。
+
+
+
+每个参数$\theta_i$的梯度负方向在数学上就是对各个$\theta_i$求偏导。
 
 梯度下降算法的公式为：
 **repeat until convergence  {**
@@ -70,7 +136,13 @@ $$\theta_j:=\theta_j - \alpha \frac{\partial}{\partial \theta_j}J(\theta)$$
 它的具体思路是在更新每一参数(也称为$\theta$)时都使用所有的样本来进行更新.采用**最小化风险函数**，所以按照每个参数$\theta_i$的梯度负方向来更新每个$\theta_i$
 
 对于梯度算法中的$ \frac{\partial}{\partial \theta_j}J(\theta)$，在批量梯度下降中是
-$$\alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j - \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
+$$ \frac{\partial}{\partial \theta_j}J(\theta) :=  \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
+
+```python
+for i in range(nb_epochs):
+  params_grad = evaluate_gradient(loss_function, data, params)
+  params = params - learning_rate * params_grad
+```  
 
 推导过程就是取偏导的过程，在后面的线性回归中描述了推导过程。
 
@@ -87,65 +159,36 @@ $$\alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j - \frac{1}{2m} 
 - 缺点：准确度下降，并不是全局最优；不易于并行实现。
 
 对于梯度算法中的$ \frac{\partial}{\partial \theta_j}J(\theta)$，在批量梯度下降中是
-$$\alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j -  (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
+$$ \frac{\partial}{\partial \theta_j}J(\theta) :=  (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
 
 ```python
 for i in range(nb_epochs):
-  params_grad = evaluate_gradient(loss_function, data, params)
-  params = params - learning_rate * params_grad
-```  
+  np.random.shuffle(data)
+  for example in data:
+    params_grad = evaluate_gradient(loss_function, example, params)
+    params = params - learning_rate * params_grad
+```
 
 ## 小批量梯度下降法MBGD（Mini-batch Gradient Descent）
 
 它是BGD/SGD方式的折衷，MBGD在每次更新参数时使用b个样本（b一般为10），使得b个样本最小化损失。
 
 对于梯度算法中的$ \frac{\partial}{\partial \theta_j}J(\theta)$，在批量梯度下降中是
-$$\alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j - \frac{1}{2m} \sum_{i=k}^{k+b} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
+$$ \frac{\partial}{\partial \theta_j}J(\theta) := \frac{1}{2m} \sum_{i=k}^{k+b} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
+
+```python
+for i in range(nb_epochs):
+  np.random.shuffle(data)
+  for batch in get_batches(data, batch_size=50):
+    params_grad = evaluate_gradient(loss_function, batch, params)
+    params = params - learning_rate * params_grad
+```
 
 # csvdata package
 
 in this package,provide same help function to read csv data and output to gonum dense
 
-# linear regression package
 
-- Hypothesis function:
-   $$h_\theta(x) = \theta^T x$$
-- cost function：
-  $$J(\theta)=\frac{1}{2m} \sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2 $$
-  $$\theta_j:=\theta_j - \alpha \frac{\partial}{\partial \theta_j}J(\theta)$$
-
-$\frac{\partial}{\partial \theta_j}J(\theta)$的推导过程如下：
-$$\frac{\partial}{\partial \theta_j}J(\theta)=  \frac{\partial}{\partial \theta_j} \frac{1}{2m} \sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2  $$
-通过分步求导,将$(h_{\theta}(x^{(i)})-y^{(i)})$以$z$表示继续：
-$$=\frac{\partial }{\partial z} \frac{1}{2m} \sum_{i=1}^{m}(z)^{2} \frac{\partial z}{ \partial \theta_j } = \frac{1}{2m} \sum_{i=1}^{m} z \frac{\partial z}{ \partial \theta_j } $$
-
-将$z$替换回$(h_{\theta}(x^{(i)})-y^{(i)})$继续:
-$$= \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)}) \frac{\partial (h_{\theta}(x^{(i)})-y^{(i)})}{ \partial \theta_j } = \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)}  $$
-
-因此线性回归的梯队下降算法最终为：
-批量梯度下降（batch gradient descent）算法的公式为：
-repeat until convergence {
-$$\theta_j:=\theta_j - \alpha \frac{\partial}{\partial \theta_j}J(\theta) := \theta_j - \frac{1}{2m} \sum_{i=1}^{m} (h_{\theta}(x^{(i)})-y^{(i)})  x_{j}^{(i)} $$
-}
-注：$x_{j}^{(i)} $中的$i$表示第$i_{th}$个样本，$j$表示该样本中的第$j_{th}$个。
-
-上面的算法，有时也称为批量梯度下降。实际上，在机器学习中，通常不太会给算法起名字，但这个名字”批量梯度下降”，指的是在梯度下降的每一步中，我们都用到了所有的训练样本，在梯度下降中，在计算微分求导项时，我们需要进行求和运算，所以，在每一个单独的梯度下降中，我们最终都要计算这样一个东西，这个项需要对所有$m$个训练样本求和。因此，批量梯度下降法这个名字说明了我们需要考虑所有这一"批"训练样本，而事实上，有时也有其他类型的梯度下降法，不是这种"批量"型的，不考虑整个的训练集，而是每次只关注训练集中的一些小的子集。
-
-## '正则化linear regression'
-
-   高次项往往是引起过拟合的因素，因此惩罚高次项(即减小高次项的系数)往往能较好解决过拟合问题。假如我们有非常多的特征，我们并不知道其中哪些特征我们要惩罚，我们将对所有的特征进行惩罚，并且让代价函数最优化的软件来选择这些惩罚的程度。这样的结果是得到了一个较为简单的能防止过拟合问题的假设： 引入正则化参数$ \lambda$ ,新的linear regression的cost function就是下面的这样的样子：
-  $$J(\theta)=\frac{1}{2m} [\sum_{i=1}^{m}(h_{\theta}(x^{(i)})-y^{(i)})^2 +\lambda \sum_{j=1}^{m} \theta_{j}^{2}]$$
-
-显然对应的梯度下降应该是：
-repeat until convergence {
-   ${\theta_0}:={\theta_0}-a\frac{1}{m}\sum\limits_{i=1}^{m}{(({h_\theta}({{x}^{(i)}})-{{y}^{(i)}})x_{0}^{(i)}})$
-
-   ${\theta_j}:={\theta_j}-a[\frac{1}{m}\sum\limits_{i=1}^{m}{(({h_\theta}({{x}^{(i)}})-{{y}^{(i)}})x_{j}^{\left( i \right)}}+\frac{\lambda }{m}{\theta_j}]$
-​
-   $for$ $j=1,2,...n$
-}
-
-注：在go代码示例中，没有使用$\lambda$正则惩罚系数，而是仅仅对每列数据作了特征归一化,这个后续补上。
 
 # logistic regression package
 
@@ -214,59 +257,3 @@ repeat until convergence {
 
 样例代码见  [ExampleMultiClassClassification_ex3data1()](logicregression\logic_example_test.go). 训练数据*ex3data1*是数字1/2/3...的灰度强度数据。
 多分类的处理其实就是转换为二分类的组合，以训练label"1"为例，当训练label“1”时，将其他label的训练Y值设置为0概率值，然后训练出label"1"对应的参数（theta），以此类推。
-
-# Neural Networks
-
-假使在图像识别中，我们采用的都是50x50像素的小图片，并且我们将所有的像素视为特征，则会有 $2500^2 /2$个特征，如果我们要进一步将两两特征组合构成一个多项式模型，则会有约个（接近3百万个）特征。普通的逻辑回归模型，不能有效地处理这么多的特征这时候我们需要神经网络。虽然神经网络也是计算量偏大的（神经网络兴起在80年代，在90年代的后期神经网络应用减少了。但是最近，神经网络又东山再起了。其中一个原因是：神经网络是计算量有些偏大的算法。然而大概由于近些年计算机的运行速度变快，才足以真正运行起大规模的神经网络。）相比下普通的逻辑回归模型的多项式计算量更大。
-
-下图是一个神经网络,其中$x_1,x_2,x_3,$是输入单元（input unit），我们将原始数据给它们。$a_1,a_2,a_3,$是中间单元它们负责将数据进行处理，然后呈递到下一层。 最后是输出单元，它负责计算$h_{\theta}(x)$。
-在描述模型时约定标记：
-
-- **$a_j^{(i)}$代表第$i$层的第$j$个激活单元**。
-- **$\Theta^{(i)}$代表第$i$层映射到第$i+1$层时权重的矩阵**
-- $L$代表神经网络层数，$S_l$表示第$l$层的neuron个数(不包括bias unit)
-
-```dot
-digraph neural {
-    rankdir=LR;
-    //rankdir=TB;
-    x1[label="x_1",style = filled, fillcolor = firebrick1,group=1]
-    x2[label="x_2",style = filled, fillcolor = firebrick1,group=1]
-    x3[label="x_3",style = filled, fillcolor = firebrick1,group=1]
-
-    a1[label="a_1^{(2)}", style = filled, fillcolor = bisque1,group=2]
-    a2[label="a_2^{(2)}", style = filled, fillcolor = bisque1,group=2]
-    a3[label="a_3^{(2)}", style = filled, fillcolor = bisque1,group=2]
-
-    out[label="",width = 0.5, style = filled, fillcolor = bisque1,group=3]
-    h[label=<<i>h_{\theta}(x)</i>>,shape=plaintext, group=4]
-
-    {x1,x2,x3} -> {a1,a2,a3} -> {out} -> h
-
-    { rank = same; x1; x2; x3; }
-    { rank = same; a1; a2; a3; }
-
-    layout1[label="layout1",shape=none,group=1]
-    layout2[label="layout2",shape=none,group=2]
-    layout3[label="layout3",shape=none,group=3]
-    { rank = same; out; layout3; }
-    layout1 -> layout2 -> layout3 [dir=none]
-}
-```
-
-其实神经网络就像是logistic regression，只不过我们把logistic regression中的输入向量$[x_1,x_2,...x_3]$成了中间层的$[a_1^{(2)},a_2^{(2)},...a_3^{(2)}]$,是$x$的进化体，并且它们是由$x,\theta$决定的,由于梯队下降所以$a$是变化的,并且变得越来越厉害。 这就是神经网络相比于逻辑回归和线性回归的优势。
-
-- cost function：
-  
-- Hypothesis function:
-
-  对于
-
-## example
-
-### 前向传播
-
-样例代码见[ExampleFeedForwardPrediction_ex3weights()](neuron\neuron_example_test.go),这个demo演示了通过前向神经网络来识别图片。
-另外通过普通logistics regression来识别图片的演示在前面 [ExampleMultiClassClassification_ex3data1()](logicregression\logic_example_test.go)样例代码也演示过.
-
-对应前向传播如字面意思，就是输入->layer-1->layer-2->layer-3。。。逐层的往后，最终得到预测函数$h_{\Theta}(x)$需要的$\Theta$。这里用大写的$\Theta$，因为这是一个矩阵。

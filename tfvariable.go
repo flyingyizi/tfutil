@@ -48,10 +48,10 @@ func (v *Variable) Init(sess *tf.Session) bool {
 
 	if _, err := sess.Run(nil, nil, []*tf.Operation{v.initHandle}); err != nil {
 		return false
-	} else {
-		v.isInit = true
-		return true
 	}
+	v.isInit = true
+	return true
+
 }
 
 func (v *Variable) Handle() tf.Output {

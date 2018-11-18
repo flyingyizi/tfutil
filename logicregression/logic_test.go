@@ -14,14 +14,14 @@ func TestComputeCost(t *testing.T) {
 	filename := "ex2data1.txt"
 	//load traning data
 	X, Y := func() (x *mat.Dense, y *mat.VecDense) {
-		orig := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", filename), false))
+		orig := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", filename)))
 		or, oc := orig.Dims()
 		// assign Y
 		var Y mat.VecDense
 		Y.CloneVec(orig.ColView(oc - 1))
 		// assign X
 		ones := mat.NewVecDense(or, csvdata.Ones(or))
-		X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+		X := csvdata.HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 		return X, &Y
 	}()
 

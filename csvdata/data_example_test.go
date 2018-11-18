@@ -51,15 +51,15 @@ func ExampleFeatureScalingMatrix() {
 // 4  1.408889  1.414214  1.477773
 // >>>
 
-func ExampleJoinDese() {
-	orig := mat.NewDense(CsvToArray("ex1data2.txt", false))
+func ExampleHorizJoinDense() {
+	orig := mat.NewDense(CsvToArray("ex1data2.txt"))
 	or, oc := orig.Dims()
 	// assign Y
 	var Y mat.VecDense
 	Y.CloneVec(orig.ColView(oc - 1))
 	// assign Y
 	ones := mat.NewVecDense(or, Ones(or))
-	X := JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+	X := HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
 	fx := mat.Formatted(X, mat.Prefix(""), mat.Squeeze())
 	fyt := mat.Formatted(Y.T(), mat.Prefix(""), mat.Squeeze())

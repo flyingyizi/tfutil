@@ -10,8 +10,7 @@ import (
 
 func TestCsvToArray(t *testing.T) {
 	type args struct {
-		filename  string
-		normalize bool
+		filename string
 	}
 	tests := []struct {
 		name    string
@@ -23,7 +22,7 @@ func TestCsvToArray(t *testing.T) {
 		// TODO: Add test cases.
 		{
 			name:  "ex1data1.txt",
-			args:  args{filename: "ex1data1.txt", normalize: false},
+			args:  args{filename: "ex1data1.txt"},
 			wantR: 97, wantC: 2,
 			wantOut: []float64{
 				//16 * 12 + 2
@@ -48,7 +47,7 @@ func TestCsvToArray(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotC, gotOut := CsvToArray(tt.args.filename, tt.args.normalize)
+			gotR, gotC, gotOut := CsvToArray(tt.args.filename)
 			if gotR != tt.wantR {
 				t.Errorf("CsvToArray() gotR = %v, want %v", gotR, tt.wantR)
 			}
@@ -62,7 +61,7 @@ func TestCsvToArray(t *testing.T) {
 	}
 }
 
-func TestJoinDese(t *testing.T) {
+func TestHorizJoinDense(t *testing.T) {
 	type args struct {
 		a *mat.Dense
 		b *mat.Dense
@@ -97,8 +96,54 @@ func TestJoinDese(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotDest := JoinDese(tt.args.a, tt.args.b, tt.args.c); !reflect.DeepEqual(gotDest, tt.wantDest) {
-				t.Errorf("JoinDese() = %v, want %v", gotDest, tt.wantDest)
+			if gotDest := HorizJoinDense(tt.args.a, tt.args.b, tt.args.c); !reflect.DeepEqual(gotDest, tt.wantDest) {
+				t.Errorf("HorizJoinDense() = %v, want %v", gotDest, tt.wantDest)
+			}
+		})
+	}
+}
+
+func TestVerticalJoinDense(t *testing.T) {
+	type args struct {
+		a *mat.Dense
+		b *mat.Dense
+		c *mat.Dense
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantDest *mat.Dense
+	}{
+		// TODO: Add test cases.
+		{name: "1",
+			args: args{
+				a: mat.NewDense(Flatten(
+					[][]float64{
+						{1, 2},
+						{4, 5}})),
+				b: mat.NewDense(Flatten(
+					[][]float64{
+						{11, 12},
+						{14, 15}})),
+				c: mat.NewDense(Flatten(
+					[][]float64{
+						{21, 22},
+						{24, 25}})),
+			},
+			wantDest: mat.NewDense(Flatten(
+				[][]float64{
+					{1, 2},
+					{4, 5},
+					{11, 12},
+					{14, 15},
+					{21, 22},
+					{24, 25}})),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotDest := VerticalJoinDense(tt.args.a, tt.args.b, tt.args.c); !reflect.DeepEqual(gotDest, tt.wantDest) {
+				t.Errorf("HorizJoinDense() = %v, want %v", gotDest, tt.wantDest)
 			}
 		})
 	}

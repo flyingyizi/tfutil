@@ -14,8 +14,7 @@ import (
 )
 
 // CsvToArray read csv to matrix with shape r by c
-// if normailize is true, it means that each colum of 'r by c' in "out" matrix will be normalied
-func CsvToArray(filename string, normalize bool) (r, c int, out []float64) {
+func CsvToArray(filename string) (r, c int, out []float64) {
 	file, err := os.Open(filename)
 
 	if err != nil {
@@ -67,20 +66,6 @@ func CsvToArray(filename string, normalize bool) (r, c int, out []float64) {
 	}
 	r = total / c
 
-	if normalize { //notify, the normailze is apply to the colum NOT for row
-		o := mat.NewDense(r, c, out)
-		var t mat.Dense
-		t.Clone(o.T())
-		tr, _ := t.Dims()
-		for i := 0; i < tr; i++ {
-			t.SetRow(i, FeatureScaling(t.RawRowView(i)...))
-		}
-		o.Clone(t.T())
-
-		r, c = o.Dims()
-		out = o.RawMatrix().Data
-	}
-
 	return
 
 }
@@ -126,9 +111,9 @@ func FeatureScaling(data ...float64) []float64 {
 	return out
 }
 
-//JoinDese join a and b with same row
+//HorizJoinDense join a and b with same row
 //
-func JoinDese(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
+func HorizJoinDense(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
 	ar, ac := a.Dims()
 
 	for _, j := range bs {
@@ -174,6 +159,54 @@ func JoinDese(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
 	return poi
 }
 
+//VerticalJoinDense join a and b with same colum
+//
+func VerticalJoinDense(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
+	ar, ac := a.Dims()
+
+	for _, j := range bs {
+		_, jc := j.Dims()
+		if ac != jc {
+			panic("wrong colum size")
+		}
+	}
+
+	//help function
+	getRowOfb := func(b mat.Matrix, j int) []float64 {
+		_, bc := b.Dims()
+		out := make([]float64, bc)
+		for i := 0; i < bc; i++ {
+			out[i] = b.At(j, i)
+		}
+		return out
+	}
+
+	var x mat.Dense
+	x.Clone(a)
+
+	var (
+		poi *mat.Dense
+		ok  bool
+	)
+
+	for _, bitem := range bs {
+		br, _ := bitem.Dims()
+
+		poi, ok = x.Grow(br, 0).(*mat.Dense)
+		if ok != true {
+			panic("type of a is wrong")
+		}
+		//append all coloums from bitem
+		for j := 0; j < br; j++ {
+			poi.SetRow(ar, getRowOfb(bitem, j))
+			ar = ar + 1
+		}
+		x = *poi
+	}
+
+	return poi
+}
+
 //Flatten flatten  two-dimensional array to one dimensional
 func Flatten(f [][]float64) (r, c int, d []float64) {
 	r = len(f)
@@ -199,6 +232,51 @@ func Unflatten(r, c int, d []float64) [][]float64 {
 		m[i] = d[i*c : (i+1)*c]
 	}
 	return m
+}
+
+// EncodeOneHot covert origLabels to onehot
+// each yoneHot's coloum map to one label's onehot in origLabels
+func EncodeOneHot(labelNum int, origLabels []float64) (yOnehot *mat.Dense) {
+
+	rmDuplicate := func(list *[]float64) []float64 {
+		var x []float64 = []float64{}
+		for _, i := range *list {
+			if len(x) == 0 {
+				x = append(x, i)
+			} else {
+				for k, v := range x {
+					if i == v {
+						break
+					}
+					if k == len(x)-1 {
+						x = append(x, i)
+					}
+				}
+			}
+		}
+		return x
+	}
+
+	labels := rmDuplicate(&origLabels)
+	maps := make(map[float64]int)
+	for i, j := range labels {
+		maps[j] = i
+	}
+
+	if len(labels) > labelNum {
+		panic("labelNum not enough big to cover origLabels")
+	}
+
+	eye := Eye(labelNum)
+
+	yOnehot = mat.NewDense(labelNum, len(origLabels), nil)
+
+	for i := 0; i < len(origLabels); i++ {
+		key := origLabels[i]
+		index := maps[key]
+		yOnehot.SetCol(i, eye.RawRowView(index))
+	}
+	return
 }
 
 // Eye returns a new identity matrix of size n×n.

@@ -11,14 +11,14 @@ import (
 
 func ExampleBGD_ex1data1() {
 	filename := "ex1data1.txt"
-	orig := mat.NewDense(csvdata.CsvToArray("testdata/"+filename, true))
+	orig := mat.NewDense(csvdata.CsvToArray("testdata/" + filename))
 	or, oc := orig.Dims()
 	// assign Y
 	var Y mat.VecDense
 	Y.CloneVec(orig.ColView(oc - 1))
 	// assign X
 	ones := mat.NewVecDense(or, csvdata.Ones(or))
-	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+	X := csvdata.HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
 	_, xc := X.Dims()
 	theta1 := mat.NewVecDense(xc, nil)
@@ -29,30 +29,4 @@ func ExampleBGD_ex1data1() {
 	fmt.Println(ComputeCost(X, &Y, mat.NewVecDense(len(t), t)))
 	// Output:
 	// 0.14744830407944606
-}
-
-func ExampleBGD_ex1data2() {
-	filename := "ex1data2.txt"
-	orig := mat.NewDense(csvdata.CsvToArray("testdata/"+filename, true))
-	or, oc := orig.Dims()
-	// assign Y
-	var Y mat.VecDense
-	Y.CloneVec(orig.ColView(oc - 1))
-	// assign X
-	ones := mat.NewVecDense(or, csvdata.Ones(or))
-	X := csvdata.JoinDese(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
-
-	_, rc := X.Dims()
-	theta1 := mat.NewVecDense(rc, nil)
-
-	t, cost := BGD(X, &Y, theta1, 0.01, 1000)
-	//SaveScatter("ex1data2", orig[0], orig[1], t...)
-	tfutil.SaveLine(filename+"cost", cost)
-
-	theta1 = mat.NewVecDense(rc, t)
-	tfutil.SaveResidualPlot(filename+"-residual", X, &Y, theta1)
-
-	fmt.Println(ComputeCost(X, &Y, mat.NewVecDense(len(t), t)))
-	// Output:
-	// 0.13070336960771892
 }
