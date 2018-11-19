@@ -1,11 +1,11 @@
-package logicregression_test
+package logistic_test
 
 import (
 	"path"
 	"testing"
 
 	"github.com/flyingyizi/tfutil/csvdata"
-	. "github.com/flyingyizi/tfutil/logicregression"
+	. "github.com/flyingyizi/tfutil/supervisedLearning/logistic"
 
 	"gonum.org/v1/gonum/mat"
 )

@@ -151,7 +151,7 @@ func (nn *NeuralNet) Cost(x mat.Matrix, yOnehot *mat.Dense) float64 {
 	var pairComputation mat.Dense
 	pairComputation.Add(first, second)
 
-	result := mat.Sum(&pairComputation) / float64(m)
+	result := -mat.Sum(&pairComputation) / float64(m)
 	return result
 
 }

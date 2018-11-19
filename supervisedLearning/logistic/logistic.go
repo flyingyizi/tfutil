@@ -1,4 +1,4 @@
-package logicregression
+package logistic
 
 import (
 	"math"

@@ -25,7 +25,7 @@ func TestNeuralNet_ForwardPropa(t *testing.T) {
 	fmt.Println(len(Y))
 
 	nn := NewNetwork(3, 400, 25, 10)
-	// layer-1 z: nil	; layer-1 a:	401 5000 ;
+	// layer-1 z: nil	;        layer-1 a:	401 5000 ;
 	// layer-2 z:	25 5000  ;   layer-2 a:	26 5000
 	// layer-3 z:	10 5000 ;	 layer-3 a:	10 5000
 	// layer-2 theta:25 401  ;  layer-3 theta:10 26
