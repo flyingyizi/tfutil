@@ -2,6 +2,7 @@ package csvdata_test
 
 import (
 	"fmt"
+	"path"
 
 	. "github.com/flyingyizi/tfutil/csvdata"
 	"gonum.org/v1/gonum/mat"
@@ -52,7 +53,9 @@ func ExampleFeatureScalingMatrix() {
 // >>>
 
 func ExampleHorizJoinDense() {
-	orig := mat.NewDense(CsvToArray("ex1data2.txt"))
+
+	filename := "ex1data2.txt"
+	orig := mat.NewDense(CsvToArray(path.Join("testdata", filename)))
 	or, oc := orig.Dims()
 	// assign Y
 	var Y mat.VecDense
@@ -114,4 +117,8 @@ func ExampleHorizJoinDense() {
 	// ⎢1  1852  4⎥
 	// ⎣1  1203  3⎦
 	//[399900  329900  369000  232000  539900  299900  314900  198999  212000  242500  239999  347000  329999  699900  259900  449900  299900  199900  499998  599000  252900  255000  242900  259900  573900  249900  464500  469000  475000  299900  349900  169900  314900  579900  285900  249900  229900  345000  549000  287000  368500  329900  314000  299000  179900  299900  239500]
+}
+
+func ExamplePCA() {
+
 }

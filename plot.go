@@ -279,7 +279,7 @@ func SaveScatters(outfileName string, scatters ...*ScatterData) {
 		plots[row][col] = p
 	}
 
-	img := vgimg.New(vg.Points(450), vg.Points(575))
+	img := vgimg.New(vg.Points(750), vg.Points(475))
 	dc := draw.New(img)
 
 	t := draw.Tiles{
@@ -324,6 +324,8 @@ func myNewScatter(sdata plotter.XYZs) (s *plotter.Scatter, err error) {
 			minZ = xyz.Z
 		}
 	}
+	//protoc when maxZ == minZ
+	maxZ = maxZ + 1
 
 	//
 	colors := moreland.Kindlmann() // Initialize a color map.

@@ -1,6 +1,7 @@
 package csvdata_test
 
 import (
+	"path"
 	"reflect"
 	"testing"
 
@@ -22,7 +23,7 @@ func TestCsvToArray(t *testing.T) {
 		// TODO: Add test cases.
 		{
 			name:  "ex1data1.txt",
-			args:  args{filename: "ex1data1.txt"},
+			args:  args{filename: path.Join("testdata", "ex1data1.txt")},
 			wantR: 97, wantC: 2,
 			wantOut: []float64{
 				//16 * 12 + 2

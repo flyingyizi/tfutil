@@ -128,11 +128,7 @@ func HorizJoinDense(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
 
 	//help function
 	getColOfb := func(b mat.Matrix, j int) []float64 {
-		br, _ := b.Dims()
-		out := make([]float64, br)
-		for i := 0; i < br; i++ {
-			out[i] = b.At(i, j)
-		}
+		out := mat.Col(nil, j, b)
 		return out
 	}
 

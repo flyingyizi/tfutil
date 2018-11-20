@@ -2,6 +2,7 @@ package kmeans
 
 import (
 	"math"
+	"math/rand"
 
 	"github.com/flyingyizi/tfutil/csvdata"
 
@@ -11,10 +12,15 @@ import (
 )
 
 //Kmeans return
+//
 // num of samples is row of X
 // k is cluserNum
 // output: idx store each sample's cluster index based on centroids
 func Kmeans(X *mat.Dense, k int, initCentroids *mat.Dense, numEpochs int) (idx []int) {
+	if initCentroids == nil {
+		initCentroids = Seed(X, k)
+	}
+
 	_, xc := X.Dims()
 	_, initc := initCentroids.Dims()
 	cr, _ := initCentroids.Dims()
@@ -32,6 +38,21 @@ func Kmeans(X *mat.Dense, k int, initCentroids *mat.Dense, numEpochs int) (idx [
 		p = computeCentroids(X, k, idx)
 	}
 
+	return
+}
+
+// Seed initializing randomly the seeds
+//
+//
+func Seed(X *mat.Dense, k int) (initCentroids *mat.Dense) {
+
+	xr, xc := X.Dims()
+	initCentroids = mat.NewDense(k, xc, nil)
+
+	for i := 0; i < k; i++ {
+		ra := rand.Intn(xr)
+		initCentroids.SetRow(i, X.RawRowView(ra))
+	}
 	return
 }
 
