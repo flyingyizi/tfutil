@@ -14,7 +14,6 @@
 github.com/kniren/gota/dataframe  ： Once we have the data parsed into a dataframe, we can filter, subset, and select our
 data easily:
 
-
 # 线性模型 linear regression
 
 对于给定的$d$维样本$[x_1,..,x_d]^T$，它的线性组合函数为：
@@ -108,8 +107,6 @@ $$\theta_{t+1}:=\theta_{t} - \alpha \frac{\partial R_D (\theta)}{\partial \theta
 批量梯度下降和随机梯度下降之间的区别在于每次迭代的优化目标是对所有样本的平均损失函数还是单个样本的损失函数。随机梯度下降因为实现简单，收敛速度也非常快，因此使用非常广泛。随机梯度下降相当于在批量梯度下降
 的梯度上引入了随机噪声。当目标函数非凸时，反而可以使其逃离局部最优点。
 
-
-
 每个参数$\theta_i$的梯度负方向在数学上就是对各个$\theta_i$求偏导。
 
 梯度下降算法的公式为：
@@ -187,8 +184,6 @@ for i in range(nb_epochs):
 # df package
 
 in this package,provide same help function to read csv data and output to gonum dense
-
-
 
 # logistic regression package
 
