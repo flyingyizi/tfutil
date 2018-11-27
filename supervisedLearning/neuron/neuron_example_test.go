@@ -7,7 +7,7 @@ import (
 
 	"gonum.org/v1/gonum/floats"
 
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 
 	"gonum.org/v1/gonum/mat"
 )
@@ -17,8 +17,8 @@ func ExampleFeedForwardPrediction_ex3weights() {
 	//load theta
 	Theta1, Theta2 := func() (theta1, theta2 *mat.Dense) {
 		filename := "ex3weights.txt"
-		theta1 = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "Theta1"+filename)))
-		theta2 = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "Theta2"+filename)))
+		theta1 = mat.NewDense(df.CsvToArray(path.Join("testdata", "Theta1"+filename)))
+		theta2 = mat.NewDense(df.CsvToArray(path.Join("testdata", "Theta2"+filename)))
 		return
 	}()
 	fmt.Printf("Theta1's shape:")
@@ -29,8 +29,8 @@ func ExampleFeedForwardPrediction_ex3weights() {
 	//load training X and Y
 	X, Y := func() (x *mat.Dense, y []float64) {
 		filename := "ex3data1.txt"
-		x = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "X"+filename)))
-		_, _, y = csvdata.CsvToArray(path.Join("testdata", "y"+filename))
+		x = mat.NewDense(df.CsvToArray(path.Join("testdata", "X"+filename)))
+		_, _, y = df.CsvToArray(path.Join("testdata", "y"+filename))
 		return
 	}()
 	fmt.Printf("X's shape:")
@@ -41,7 +41,7 @@ func ExampleFeedForwardPrediction_ex3weights() {
 	//layer-1 a1:= [ones, X], it is neuron input
 	a1 := func() *mat.Dense {
 		xr, _ := X.Dims()
-		z := csvdata.HorizJoinDense(mat.NewVecDense(xr, csvdata.Ones(xr)), X)
+		z := df.HorizJoinDense(mat.NewVecDense(xr, df.Ones(xr)), X)
 		return z
 	}()
 	fmt.Printf("a1's shape:")
@@ -65,8 +65,8 @@ func ExampleFeedForwardPrediction_ex3weights() {
 	//layer-3 a3:= sigmod( [ones,a2] * Theta2.T)
 	a3 := func() *mat.Dense {
 		a2r, _ := a2.Dims()
-		ones, norm := mat.NewVecDense(a2r, csvdata.Ones(a2r)), csvdata.FeatureScalingMatrix(a2)
-		ones_a2 := csvdata.HorizJoinDense(ones, norm)
+		ones, norm := mat.NewVecDense(a2r, df.Ones(a2r)), df.FeatureScalingMatrix(a2)
+		ones_a2 := df.HorizJoinDense(ones, norm)
 
 		var z mat.Dense
 		z.Mul(ones_a2, Theta2.T())

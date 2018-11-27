@@ -5,7 +5,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -14,11 +14,11 @@ func TestNeuralNet_ForwardPropa(t *testing.T) {
 	//load training X and Y
 	X, Y := func() (x *mat.Dense, y []float64) {
 		filename := "ex3data1.txt"
-		x = mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "X"+filename)))
-		_, _, y = csvdata.CsvToArray(path.Join("testdata", "y"+filename))
+		x = mat.NewDense(df.CsvToArray(path.Join("testdata", "X"+filename)))
+		_, _, y = df.CsvToArray(path.Join("testdata", "y"+filename))
 		return
 	}()
-	yOneHot := csvdata.EncodeOneHot(10, Y)
+	yOneHot := df.EncodeOneHot(10, Y)
 	fmt.Printf("X's shape:")
 	fmt.Println(X.Dims())
 	fmt.Printf("Y's shape:")

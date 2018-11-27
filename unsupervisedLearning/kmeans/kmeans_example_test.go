@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/flyingyizi/tfutil"
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 
 	"gonum.org/v1/gonum/mat"
 )
@@ -15,7 +15,7 @@ import (
 func ExampleKmeans() {
 	//load training X
 	filename := "ex7data2.txt"
-	X := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "X"+filename)))
+	X := mat.NewDense(df.CsvToArray(path.Join("testdata", "X"+filename)))
 	m, _ := X.Dims()
 
 	//assign original scatter plot data

@@ -184,7 +184,7 @@ for i in range(nb_epochs):
     params = params - learning_rate * params_grad
 ```
 
-# csvdata package
+# df package
 
 in this package,provide same help function to read csv data and output to gonum dense
 

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/flyingyizi/tfutil"
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 
 	//	. "github.com/flyingyizi/tfutil/logicregression"
 
@@ -17,7 +17,7 @@ import (
 func ExampleSaveScatterToImage_ex3data1() {
 	filename := "ex3data1.txt"
 
-	r, c, origx := csvdata.CsvToArray(path.Join("logicregression", "testdata", "X"+filename))
+	r, c, origx := df.CsvToArray(path.Join("logicregression", "testdata", "X"+filename))
 	orig := mat.NewDense(r, c, origx)
 
 	generateRangeNum := func(min, max int) int {

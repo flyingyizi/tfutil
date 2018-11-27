@@ -1,11 +1,11 @@
-package csvdata_test
+package df_test
 
 import (
 	"path"
 	"reflect"
 	"testing"
 
-	. "github.com/flyingyizi/tfutil/csvdata"
+	. "github.com/flyingyizi/tfutil/df"
 	"gonum.org/v1/gonum/mat"
 )
 

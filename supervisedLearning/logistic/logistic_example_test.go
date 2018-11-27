@@ -6,7 +6,7 @@ import (
 
 	"github.com/flyingyizi/tfutil"
 
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 	. "github.com/flyingyizi/tfutil/supervisedLearning/logistic"
 
 	"gonum.org/v1/gonum/floats"
@@ -18,14 +18,14 @@ func ExampleComputeCost() {
 	filename := "ex2data1.txt"
 	//load traning data
 	X, Y := func() (x *mat.Dense, y *mat.VecDense) {
-		orig := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", filename)))
+		orig := mat.NewDense(df.CsvToArray(path.Join("testdata", filename)))
 		or, oc := orig.Dims()
 		// assign Y
 		var Y mat.VecDense
 		Y.CloneVec(orig.ColView(oc - 1))
 		// assign X
-		ones := mat.NewVecDense(or, csvdata.Ones(or))
-		X := csvdata.HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+		ones := mat.NewVecDense(or, df.Ones(or))
+		X := df.HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 		return X, &Y
 	}()
 
@@ -42,12 +42,12 @@ func ExampleComputeCost() {
 func ExampleMultiClassClassification_ex3data1() {
 	filename := "ex3data1.txt"
 
-	X := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", "X"+filename)))
-	_, _, Y := csvdata.CsvToArray(path.Join("testdata", "y"+filename))
+	X := mat.NewDense(df.CsvToArray(path.Join("testdata", "X"+filename)))
+	_, _, Y := df.CsvToArray(path.Join("testdata", "y"+filename))
 
 	xr, xc := X.Dims()
-	ones, norm := mat.NewVecDense(xr, csvdata.Ones(xr)), csvdata.FeatureScalingMatrix(X)
-	X = csvdata.HorizJoinDense(ones, norm)
+	ones, norm := mat.NewVecDense(xr, df.Ones(xr)), df.FeatureScalingMatrix(X)
+	X = df.HorizJoinDense(ones, norm)
 	xr, xc = X.Dims()
 
 	allLabels := map[float64]string{1: "1", 2: "2", 3: "3", 4: "4", 5: "5",

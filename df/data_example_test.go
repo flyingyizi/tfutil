@@ -1,10 +1,10 @@
-package csvdata_test
+package df_test
 
 import (
 	"fmt"
 	"path"
 
-	. "github.com/flyingyizi/tfutil/csvdata"
+	. "github.com/flyingyizi/tfutil/df"
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -120,5 +120,17 @@ func ExampleHorizJoinDense() {
 }
 
 func ExamplePCA() {
+
+	a := mat.NewDense(2, 5,
+		[]float64{-1, -2, -1, 0, 0, 0, 2, 1, 0, 1})
+	k := 1
+	p := NewPCA(k)
+	tra, _ := p.FitTransform(a)
+	fmt.Printf("%0.4f", mat.Formatted(tra, mat.Prefix(""), mat.Squeeze()))
+
+	//fmt.Println(p.ExplainedVariance())
+
+	//output:
+	// [-0.7071  -2.8284  -1.4142  0.0000  -0.7071]
 
 }

@@ -1,4 +1,4 @@
-package csvdata
+package df
 
 import (
 	"gonum.org/v1/gonum/mat"

@@ -4,7 +4,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 	. "github.com/flyingyizi/tfutil/supervisedLearning/logistic"
 
 	"gonum.org/v1/gonum/mat"
@@ -14,14 +14,14 @@ func TestComputeCost(t *testing.T) {
 	filename := "ex2data1.txt"
 	//load traning data
 	X, Y := func() (x *mat.Dense, y *mat.VecDense) {
-		orig := mat.NewDense(csvdata.CsvToArray(path.Join("testdata", filename)))
+		orig := mat.NewDense(df.CsvToArray(path.Join("testdata", filename)))
 		or, oc := orig.Dims()
 		// assign Y
 		var Y mat.VecDense
 		Y.CloneVec(orig.ColView(oc - 1))
 		// assign X
-		ones := mat.NewVecDense(or, csvdata.Ones(or))
-		X := csvdata.HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+		ones := mat.NewVecDense(or, df.Ones(or))
+		X := df.HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 		return X, &Y
 	}()
 

@@ -4,21 +4,21 @@ import (
 	"fmt"
 
 	"github.com/flyingyizi/tfutil"
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 	. "github.com/flyingyizi/tfutil/linearregression"
 	"gonum.org/v1/gonum/mat"
 )
 
 func ExampleBGD_ex1data1() {
 	filename := "ex1data1.txt"
-	orig := mat.NewDense(csvdata.CsvToArray("testdata/" + filename))
+	orig := mat.NewDense(df.CsvToArray("testdata/" + filename))
 	or, oc := orig.Dims()
 	// assign Y
 	var Y mat.VecDense
 	Y.CloneVec(orig.ColView(oc - 1))
 	// assign X
-	ones := mat.NewVecDense(or, csvdata.Ones(or))
-	X := csvdata.HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
+	ones := mat.NewVecDense(or, df.Ones(or))
+	X := df.HorizJoinDense(ones, orig.Slice(0, or, 0, oc-1)) //X shape is: 'or by (oc)'
 
 	_, xc := X.Dims()
 	theta1 := mat.NewVecDense(xc, nil)

@@ -4,7 +4,7 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 
 	"gonum.org/v1/gonum/floats"
 
@@ -118,6 +118,6 @@ func computeCentroids(X *mat.Dense, k int, idx []int) (centroids *mat.Dense) {
 		}
 	}
 
-	centroids = mat.NewDense(csvdata.Flatten(sum))
+	centroids = mat.NewDense(df.Flatten(sum))
 	return
 }

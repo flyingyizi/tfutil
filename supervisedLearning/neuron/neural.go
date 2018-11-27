@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/flyingyizi/tfutil/csvdata"
+	"github.com/flyingyizi/tfutil/df"
 
 	"gonum.org/v1/gonum/floats"
 
@@ -67,14 +67,14 @@ func (nn *NeuralNet) ForwardPropa(x mat.Matrix) error {
 	//w shape:               25x401,        10x26
 
 	_, xc := x.Dims()
-	ones := csvdata.Ones(xc)
+	ones := df.Ones(xc)
 
 	for i := 0; i < nn.LayerNum; i++ {
 		curr := &(nn.Layers[i])
 		//input layer
 		if i == 0 {
 			curr.z = nil
-			curr.a = csvdata.VerticalJoinDense(mat.NewDense(1, len(ones), ones), x)
+			curr.a = df.VerticalJoinDense(mat.NewDense(1, len(ones), ones), x)
 			continue
 		}
 
@@ -93,7 +93,7 @@ func (nn *NeuralNet) ForwardPropa(x mat.Matrix) error {
 			if i == nn.LayerNum-1 {
 				return &a
 			}
-			pa := csvdata.VerticalJoinDense(mat.NewDense(1, len(ones), ones), &a)
+			pa := df.VerticalJoinDense(mat.NewDense(1, len(ones), ones), &a)
 			return pa
 		}()
 

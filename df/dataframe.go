@@ -1,4 +1,4 @@
-package csvdata
+package df
 
 import (
 	"encoding/csv"
