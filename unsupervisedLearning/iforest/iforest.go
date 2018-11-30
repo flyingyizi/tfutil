@@ -26,6 +26,7 @@ func computeC(n float64) float64 {
 type optionalAttr struct {
 	NbTrees         int
 	SubsamplingSize int
+	AnomalyRatio    float64
 }
 
 // NewForestAttr is an optional argument to create Forest.
@@ -49,6 +50,15 @@ func SubsamplingSize(value int) NewForestAttr {
 	}
 }
 
+// AnomalyRatio sets the optional anomaly ratio attribute to value.
+//
+// value: anomaly ratio to be set. If not specified, defaults to 0.01
+func AnomalyRatio(value float64) NewForestAttr {
+	return func(m *optionalAttr) {
+		m.AnomalyRatio = value
+	}
+}
+
 // Forest is a base structure for Isolation Forest algorithm. It holds algorithm
 // parameters like number of trees, subsampling size, anomalies ratio and
 // collection of created trees.
@@ -60,16 +70,15 @@ type Forest struct {
 	HeightLimit   int
 	AnomalyScores map[int]float64
 	AnomalyBound  float64
-	AnomalyRatio  float64
 	Labels        []int
 	Trained       bool
 	Tested        bool
 }
 
 //NewForest initializes Forest structure.
-func NewForest(anomalyRatio float64, optional ...NewForestAttr) *Forest {
+func NewForest(optional ...NewForestAttr) *Forest {
 	//default
-	attrs := optionalAttr{NbTrees: 100, SubsamplingSize: 256}
+	attrs := optionalAttr{NbTrees: 100, SubsamplingSize: 256, AnomalyRatio: 0.01}
 	// customize
 	for _, a := range optional {
 		a(&attrs)
@@ -80,7 +89,6 @@ func NewForest(anomalyRatio float64, optional ...NewForestAttr) *Forest {
 	f.Trees = make([]Tree, attrs.NbTrees)
 	f.AnomalyScores = make(map[int]float64)
 
-	f.AnomalyRatio = anomalyRatio
 	return f
 }
 
@@ -116,8 +124,7 @@ func (f *Forest) Test(X mat.Matrix) error {
 
 	//calc score for each instance
 
-	// • (a) if instances return s very close to 1, then they are
-	// definitely anomalies,
+	// • (a) if instances return s very close to 1, then they are definitely anomalies,
 	// • (b) if instances have s much smaller than 0.5, then they
 	// are quite safe to be regarded as normal instances, and
 	// • (c) if all the instances return s ≈ 0.5, then the entire
@@ -135,23 +142,26 @@ func (f *Forest) Test(X mat.Matrix) error {
 		// $$s(x, n) = 2^{- \frac{E(h(x))}{c(n)}  } ,$$
 		average := sum / float64(len(f.Trees))
 		s := math.Pow(2, (-average / cn))
-		//s= 0.5 - s
+		//s= s- 0.5
 		f.AnomalyScores[i] = s
 	}
 
 	sorted := sortMap(f.AnomalyScores)
-	anomFloor := int(math.Floor(f.AnomalyRatio * float64(m)))
-	anomCeil := int(math.Ceil(f.AnomalyRatio * float64(m)))
+	anomFloor := int(math.Floor(f.Option.AnomalyRatio * float64(m)))
+	anomCeil := int(math.Ceil(f.Option.AnomalyRatio * float64(m)))
 	f.AnomalyBound = (sorted[anomFloor].Value + sorted[anomCeil].Value) / 2
 
 	f.Labels = make([]int, m)
-	for i := 0; i < m; i++ {
-		if f.AnomalyScores[i] < f.AnomalyBound {
-			f.Labels[i] = 1
-		} else {
-			f.Labels[i] = 0
+
+	if f.AnomalyBound > 0.5 {
+		for i := 0; i < m; i++ {
+			if f.AnomalyScores[i] > f.AnomalyBound {
+				f.Labels[i] = 1
+			} else {
+				f.Labels[i] = 0
+			}
 		}
-	}
+	} // else
 
 	f.Tested = true
 
@@ -161,8 +171,7 @@ func (f *Forest) Test(X mat.Matrix) error {
 
 // Predict computes anomaly scores for given dataset and classifies each vector
 // as 'normal' or 'anomaly'.
-func (f *Forest) Predict(X mat.Matrix) ([]int, []float64, error) {
-	_, m := X.Dims()
+func (f *Forest) Predict(X mat.Matrix) (labels []int, scores []float64, err error) {
 
 	if !f.Trained {
 		return nil, nil, errors.New("cannot predict - model has not been trained yet")
@@ -170,9 +179,10 @@ func (f *Forest) Predict(X mat.Matrix) ([]int, []float64, error) {
 	if !f.Tested {
 		return nil, nil, errors.New("cannot predict - model has not been tested yet")
 	}
-
-	labels := make([]int, m)
-	scores := make([]float64, m)
+	//m represent number of instance
+	_, m := X.Dims()
+	labels = make([]int, m)
+	scores = make([]float64, m)
 
 	cn := computeC(float64(f.Option.SubsamplingSize))
 	for i := 0; i < m; i++ {
@@ -186,42 +196,49 @@ func (f *Forest) Predict(X mat.Matrix) ([]int, []float64, error) {
 		// $$s(x, n) = 2^{- \frac{E(h(x))}{c(n)}  } ,$$
 		average := sumPathLength / float64(len(f.Trees))
 		s := math.Pow(2, (-average / cn))
-		//s= 0.5 - s
-
+		//s= s - 0.5
 		scores[i] = s
 	}
 
 	for i := 0; i < m; i++ {
-		if scores[i] < f.AnomalyBound {
+		if scores[i] > f.AnomalyBound {
 			labels[i] = 1
 		} else {
 			labels[i] = 0
 		}
 	}
 
-	return labels, scores, nil
+	return
 
 }
 
 // TestParallel does the same as Test but using multiple go routines
-func (f *Forest) TestParallel(X [][]float64, routinesNumber int) error {
-
+func (f *Forest) TestP(X mat.Matrix, routinesNumber int) error {
+	_, m := X.Dims()
 	if !f.Trained {
 		return errors.New("cannot start testing phase - model has not been trained yet")
 	}
 
-	if routinesNumber > len(X) || routinesNumber == 0 {
+	if routinesNumber > m || routinesNumber == 0 {
 		return errors.New("number of routines cannot be bigger than nubmer of vectors or equal to 0")
 	}
-	var CAnomalyScores sync.Map
+
+	scores :=make(chan kv,m)
 	var wg sync.WaitGroup
-	wg.Add(routinesNumber)
-	vectorsPerRoutine := int(len(X) / routinesNumber)
+	
+
+	for i := 0; i < routinesNumber; i++ {
+	}
+
+	perRoutine := int(m / routinesNumber)
 
 	for j := 0; j < routinesNumber; j++ {
-		go f.computeAnomalies(X, j*vectorsPerRoutine, j*vectorsPerRoutine+vectorsPerRoutine, &wg, &CAnomalyScores)
+		wg.Add(1) //++
+		go f.computePartScores(X, j*perRoutine, (j+1)*perRoutine, &wg, scores)
 	}
 	wg.Wait()
+
+	
 
 	CAnomalyScores.Range(func(key, value interface{}) bool {
 		f.AnomalyScores[key.(int)] = value.(float64)
@@ -229,13 +246,13 @@ func (f *Forest) TestParallel(X [][]float64, routinesNumber int) error {
 	})
 
 	sorted := sortMap(f.AnomalyScores)
-	anomFloor := int(math.Floor(f.AnomalyRatio * float64(len(X))))
-	anomCeil := int(math.Ceil(f.AnomalyRatio * float64(len(X))))
+	anomFloor := int(math.Floor(f.Option.AnomalyRatio * float64(m)))
+	anomCeil := int(math.Ceil(f.Option.AnomalyRatio * float64(m)))
 	f.AnomalyBound = (sorted[anomFloor].Value + sorted[anomCeil].Value) / 2
 
-	f.Labels = make([]int, len(X))
-	for i := 0; i < len(X); i++ {
-		if f.AnomalyScores[i] < f.AnomalyBound {
+	f.Labels = make([]int, m)
+	for i := 0; i < m; i++ {
+		if f.AnomalyScores[i] > f.AnomalyBound {
 			f.Labels[i] = 1
 		} else {
 			f.Labels[i] = 0
@@ -276,7 +293,6 @@ func (f *Forest) PredictParallel(X [][]float64, routinesNumber int) ([]int, []fl
 				for j := 0; j < len(f.Trees); j++ {
 					path := f.Trees[j].PathLength(X[i])
 					sumPathLength += path
-
 				}
 				// $$s(x, n) = 2^{- \frac{E(h(x))}{c(n)}  } ,$$
 				average := sumPathLength / float64(len(f.Trees))
@@ -317,27 +333,32 @@ func (f *Forest) createSubsamplesWithoutReplacement(X map[int]float32) []int {
 	return subsamplesIds
 }
 
-func (f *Forest) computeAnomalies(X [][]float64, start, stop int, wg *sync.WaitGroup, as *sync.Map) {
+//computePartScores() compute score for part of X instances
+//
+func (f *Forest) computePartScores(X mat.Matrix, start, stop int, wg *sync.WaitGroup, as chan kv) {
+   defer wg.Done()
 
+	_,m:=X.Dims()
+	if stop > m {
+		stop=m
+	}
 	cn := computeC(float64(f.Option.SubsamplingSize))
 
 	for i := start; i < stop; i++ {
-		var sumPathLength float64
-		sumPathLength = 0.0
+		var sum float64
+		sum = 0.0
 		for j := 0; j < len(f.Trees); j++ {
-			path := f.Trees[j].PathLength(X[i])
-			sumPathLength += path
+			instance := mat.Col(nil, i, X)
+			path := f.Trees[j].PathLength(instance)
+			sum += path
 		}
 
 		// $$s(x, n) = 2^{- \frac{E(h(x))}{c(n)}  } ,$$
-		average := sumPathLength / float64(len(f.Trees))
+		average := sum / float64(len(f.Trees))
 		s := math.Pow(2, (-average / cn))
-		//s= 0.5 - s
-
-		as.Store(i, s)
-	}
-
-	wg.Done()
+		//s= s-0.5
+		as <- kv{Key: i, Value: s}
+	}	
 }
 
 // sortMap sorts given map in descending order.

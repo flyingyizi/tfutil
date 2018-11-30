@@ -1,6 +1,7 @@
 package iforest_test
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/flyingyizi/tfutil"
@@ -9,7 +10,7 @@ import (
 	"gonum.org/v1/gonum/mat"
 )
 
-func ExampleIforest() {
+func ExampleForest() {
 	//load training X
 	filename := "ex7data2.txt"
 	X := mat.NewDense(df.CsvToArray(path.Join("testdata", "X"+filename)))
@@ -23,18 +24,11 @@ func ExampleIforest() {
 	}
 	origScatt.Add("orig", xs, ys, zs)
 
-	//assign original scatter plot data
-	// clusterScatt := &tfutil.ScatterData{}
-	// for i := 0; i < m; i++ {
-	// 	xs[i], ys[i], zs[i] = X.At(i, 0), X.At(i, 1), float64(idx[i])
-	// }
-	// clusterScatt.Add("cluster", xs, ys, zs)
-
-	// tfutil.SaveScatters(filename, origScatt, clusterScatt)
-	// fmt.Println("")
-
 	//model initialization
-	forest := iforest.NewForest(0.01, iforest.NbTrees(100), iforest.SubsamplingSize(256))
+	forest := iforest.NewForest(
+		iforest.AnomalyRatio(0.01),
+		iforest.NbTrees(100),
+		iforest.SubsamplingSize(256))
 
 	//training stage - creating trees
 	forest.Train(X.T())
@@ -43,6 +37,18 @@ func ExampleIforest() {
 	//Test or TestParaller can be used, concurrent version needs one additional
 	// parameter
 	forest.Test(X.T())
+	// labels, _, _ := forest.Predict(X.T())
+	labelsTest := forest.Labels
+
+	//assign labeled scatter plot data
+	clusterScatt := &tfutil.ScatterData{}
+	for i := 0; i < m; i++ {
+		xs[i], ys[i], zs[i] = X.At(i, 0), X.At(i, 1), float64(labelsTest[i])
+	}
+	clusterScatt.Add("cluster", xs, ys, zs)
+
+	tfutil.SaveScatters(filename, origScatt, clusterScatt)
+	fmt.Println("")
 	//output:
 	//
 }

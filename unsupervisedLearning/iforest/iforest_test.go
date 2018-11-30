@@ -30,7 +30,7 @@ func TestForest_Train(t *testing.T) {
 		f *Forest
 		X [][]float64
 	}{
-		{f: NewForest(0.1, NbTrees(1), SubsamplingSize(2)),
+		{f: NewForest(AnomalyRatio(0.1), NbTrees(1), SubsamplingSize(2)),
 			X: [][]float64{
 				{1, 1, 1},
 				{1, 1, 1},
@@ -50,9 +50,9 @@ func TestForest_Test(t *testing.T) {
 		trainFirst bool
 		wantErr    bool
 	}{
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)),
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)),
 			X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, trainFirst: false, wantErr: true},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)),
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)),
 			X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, trainFirst: true, wantErr: false},
 	}
 	for _, tt := range tests {
@@ -78,11 +78,11 @@ func TestForest_Predict(t *testing.T) {
 		X          [][]float64
 		wantErr    bool
 	}{
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)),
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)),
 			X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, trainFirst: false, testFirst: false, wantErr: true},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)),
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)),
 			X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, trainFirst: true, testFirst: false, wantErr: true},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)),
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)),
 			X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, trainFirst: true, testFirst: true, wantErr: false},
 	}
 	for _, tt := range tests {
@@ -112,11 +112,11 @@ func TestForest_PredictParallel(t *testing.T) {
 		testFirst      bool
 		wantErr        bool
 	}{
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 2, trainFirst: false, testFirst: false, wantErr: true},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 2, trainFirst: true, testFirst: false, wantErr: true},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 1, trainFirst: true, testFirst: true, wantErr: false},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 0, trainFirst: true, testFirst: true, wantErr: true},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 10, trainFirst: true, testFirst: true, wantErr: true},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 2, trainFirst: false, testFirst: false, wantErr: true},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 2, trainFirst: true, testFirst: false, wantErr: true},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 1, trainFirst: true, testFirst: true, wantErr: false},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 0, trainFirst: true, testFirst: true, wantErr: true},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 10, trainFirst: true, testFirst: true, wantErr: true},
 	}
 	for i, tt := range tests {
 		a := mat.NewDense(df.Flatten(tt.X))
@@ -145,10 +145,10 @@ func TestForest_TestParallel(t *testing.T) {
 		trainFirst     bool
 		wantErr        bool
 	}{
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 2, trainFirst: false, wantErr: true},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 1, trainFirst: true, wantErr: false},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 0, trainFirst: true, wantErr: true},
-		{f: NewForest(0.4, NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 10, trainFirst: true, wantErr: true},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 2, trainFirst: false, wantErr: true},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 1, trainFirst: true, wantErr: false},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 0, trainFirst: true, wantErr: true},
+		{f: NewForest(AnomalyRatio(0.4), NbTrees(1), SubsamplingSize(4)), X: [][]float64{{1, 1, 1}, {1, 1, 1}, {10, 10, 10}}, routinesNumber: 10, trainFirst: true, wantErr: true},
 	}
 	for _, tt := range tests {
 		a := mat.NewDense(df.Flatten(tt.X))
@@ -171,8 +171,8 @@ func TestForest_Save(t *testing.T) {
 		path    string
 		wantErr bool
 	}{
-		{f: NewForest(0.1, NbTrees(1), SubsamplingSize(2)), path: "", wantErr: true},
-		{f: NewForest(0.1, NbTrees(1), SubsamplingSize(2)), path: "aaa", wantErr: false},
+		{f: NewForest(AnomalyRatio(0.1), NbTrees(1), SubsamplingSize(2)), path: "", wantErr: true},
+		{f: NewForest(AnomalyRatio(0.1), NbTrees(1), SubsamplingSize(2)), path: "aaa", wantErr: false},
 	}
 	for _, tt := range tests {
 
@@ -191,9 +191,9 @@ func TestForest_Load(t *testing.T) {
 		path    string
 		wantErr bool
 	}{
-		{f: NewForest(0.1, NbTrees(1), SubsamplingSize(2)), path: "", wantErr: true},
-		{f: NewForest(0.1, NbTrees(1), SubsamplingSize(2)), path: "xD", wantErr: true},
-		{f: NewForest(0.1, NbTrees(1), SubsamplingSize(2)), path: "aaa", wantErr: false},
+		{f: NewForest(AnomalyRatio(0.1), NbTrees(1), SubsamplingSize(2)), path: "", wantErr: true},
+		{f: NewForest(AnomalyRatio(0.1), NbTrees(1), SubsamplingSize(2)), path: "xD", wantErr: true},
+		{f: NewForest(AnomalyRatio(0.1), NbTrees(1), SubsamplingSize(2)), path: "aaa", wantErr: false},
 	}
 	for _, tt := range tests {
 
