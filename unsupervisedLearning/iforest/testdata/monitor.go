@@ -94,7 +94,7 @@ func producer(wg *sync.WaitGroup, queue chan *string, quit chan os.Signal, inter
 		}
 
 		//
-		s := collet()
+		s, _ := collet()
 		queue <- s
 		i++
 		if i > maxrecord-1 {
@@ -126,7 +126,7 @@ func writeFile(wg *sync.WaitGroup, queue chan *string, bufferedWriter *bufio.Wri
 	//fmt.Println("Consumer | exit")
 }
 
-func collet() *string {
+func collet() (*string, []float64) {
 
 	connections, _ := net.Connections("tcp")
 	//c := cpuInfo()
@@ -135,13 +135,22 @@ func collet() *string {
 	cc, _ := cpu.Percent(0, false)
 
 	// cpuPercent , memUsedPercent, recB,sendB, num conn
-	s := fmt.Sprintf("%v,  %0.4f,%0.4f,  %v,%v, %v\n",
-		time.Now().UnixNano(),
-		cc[0], m.UsedPercent,
-		n.BytesRecv, n.BytesSent,
-		(len(connections)))
+	d := make([]float64, 6)
+	d[0] = float64(time.Now().UnixNano())
+	d[1] = cc[0]
+	d[2] = m.UsedPercent
+	d[3] = float64(n.BytesRecv)
+	d[4] = float64(n.BytesSent)
+	d[5] = float64(len(connections))
 
-	return &s
+	s := fmt.Sprintf("%v,  %v,%v,  %v,%v, %v\n", d[0], d[1], d[2], d[3], d[4], d[5])
+	// s := fmt.Sprintf("%v,  %0.4f,%0.4f,  %v,%v, %v\n",
+	// time.Now().UnixNano(),
+	// cc[0], m.UsedPercent,
+	// n.BytesRecv, n.BytesSent,
+	// (len(connections)))
+
+	return &s, d
 
 }
 

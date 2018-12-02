@@ -3,6 +3,7 @@ package iforest_test
 import (
 	"fmt"
 	"path"
+	"time"
 
 	"gonum.org/v1/gonum/floats"
 
@@ -66,6 +67,7 @@ func ExampleForest() {
 }
 
 func ExampleForest_abcd() {
+
 	//load training X
 	filename := "abcd.txt"
 	temp := mat.NewDense(df.CsvToArray(path.Join("testdata", filename)))
@@ -73,7 +75,7 @@ func ExampleForest_abcd() {
 
 	//info: time, cpuPercent , memUsedPercent, net recB,sendB, num of conn
 	//get time
-	_, cpuPercent, memPercent := mat.Col(nil, 0, temp), mat.Col(nil, 1, temp), mat.Col(nil, 2, temp)
+	locTime, cpuPercent, memPercent := mat.Col(nil, 0, temp), mat.Col(nil, 1, temp), mat.Col(nil, 2, temp)
 	netRec, netSent, numc := mat.Col(nil, 3, temp), mat.Col(nil, 4, temp), mat.Col(nil, 5, temp)
 	floats.Div(netRec, numc)
 	floats.Div(netSent, numc)
@@ -100,15 +102,15 @@ func ExampleForest_abcd() {
 
 	//model initialization
 	forest := iforest.NewForest(
-		iforest.AnomalyRatio(0.0001),
+		iforest.AnomalyRatio(0.001),
 		iforest.NbTrees(100),
 		iforest.SubsamplingSize(256))
 
 	//training and testing stage - creating trees, finding anomalies
 	// forest.Train(xx.T())
 	// forest.Test(xx.T())
-	forest.Train(xx.T())
-	forest.Test(xx.T())
+	forest.Train(tra)
+	forest.Test(tra)
 
 	// scores := make([]float64, len(forest.AnomalyScores))
 	// copy(scores, forest.AnomalyScores)
@@ -123,6 +125,14 @@ func ExampleForest_abcd() {
 	// 	}
 	// }
 	labelsTest := forest.Labels
+	j := 0
+	for i := 0; i < m; i++ {
+		if labelsTest[i] == 1 {
+			j++
+			fmt.Printf("%v:%v\n", time.Unix(0, int64(locTime[i])), forest.AnomalyScores[i])
+		}
+	}
+	fmt.Printf("totoal anomaly:%v", j)
 
 	//assign labeled scatter plot data
 	clusterScatt := &tfutil.ScatterData{}
@@ -136,6 +146,7 @@ func ExampleForest_abcd() {
 	tfutil.SaveBoxPlot("box-"+filename, forest.AnomalyScores)
 
 	tfutil.SaveHistograms("hist-"+filename, forest.AnomalyScores)
+	forest.Save("testdata\\saved.json")
 	fmt.Println("")
 	//output:
 	//
