@@ -12,3 +12,9 @@ data = loadmat('ex7data2.mat')
 X=pd.DataFrame(data['X'])
 X.to_csv('Xex7data2.txt',header=False,index=False)
 ```
+# 工具集
+
+|tool| descripton|
+|--|--|
+|monitor|采集机器信息作为机器异常检测数据源|
+|||

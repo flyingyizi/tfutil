@@ -122,7 +122,8 @@ func ExampleHorizJoinDense() {
 func ExamplePCA() {
 
 	a := mat.NewDense(2, 5,
-		[]float64{-1, -2, -1, 0, 0, 0, 2, 1, 0, 1})
+		[]float64{-1, -2, -1, 0,
+			0, 0, 2, 1, 0, 1})
 	k := 1
 	p := NewPCA(k)
 	tra, _ := p.FitTransform(a)

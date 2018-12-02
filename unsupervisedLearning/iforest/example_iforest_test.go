@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path"
 
+	"gonum.org/v1/gonum/floats"
+
 	"github.com/flyingyizi/tfutil"
 	"github.com/flyingyizi/tfutil/df"
 	"github.com/flyingyizi/tfutil/unsupervisedLearning/iforest"
@@ -26,7 +28,7 @@ func ExampleForest() {
 
 	//model initialization
 	forest := iforest.NewForest(
-		iforest.AnomalyRatio(0.01),
+		iforest.AnomalyRatio(0.0001),
 		iforest.NbTrees(100),
 		iforest.SubsamplingSize(256))
 
@@ -38,6 +40,14 @@ func ExampleForest() {
 	// parameter
 	forest.Test(X.T())
 	// labels, _, _ := forest.Predict(X.T())
+	scores := forest.AnomalyScores
+
+	for i := 0; i < len(scores); i++ {
+		if scores[i] < 0.5 {
+			fmt.Println("score large than 0.5 has:", i, " total:", m)
+			break
+		}
+	}
 	labelsTest := forest.Labels
 
 	//assign labeled scatter plot data
@@ -48,67 +58,85 @@ func ExampleForest() {
 	clusterScatt.Add("cluster", xs, ys, zs)
 
 	tfutil.SaveScatters(filename, origScatt, clusterScatt)
+
+	tfutil.SaveBoxPlot("box-"+filename, forest.AnomalyScores)
 	fmt.Println("")
 	//output:
 	//
 }
 
-// input parameters
-// treesNumber := 100
-// subsampleSize := 256
-// outliersRatio := 0.01
-// routinesNumber := 10
+func ExampleForest_abcd() {
+	//load training X
+	filename := "abcd.txt"
+	temp := mat.NewDense(df.CsvToArray(path.Join("testdata", filename)))
+	m, _ := temp.Dims()
 
-// forest.TestParallel(inputData, routinesNumber)
+	//info: time, cpuPercent , memUsedPercent, net recB,sendB, num of conn
+	//get time
+	_, cpuPercent, memPercent := mat.Col(nil, 0, temp), mat.Col(nil, 1, temp), mat.Col(nil, 2, temp)
+	netRec, netSent, numc := mat.Col(nil, 3, temp), mat.Col(nil, 4, temp), mat.Col(nil, 5, temp)
+	floats.Div(netRec, numc)
+	floats.Div(netSent, numc)
 
-//after testing it is possible to access anomaly scores, anomaly bound
-// and labels for the input dataset
-// threshold := forest.AnomalyBound
-// anomalyScores := forest.AnomalyScores
-// labelsTest := forest.Labels
+	xx := mat.NewDense(m, 4, nil)
+	xx.SetCol(0, df.FeatureScaling(cpuPercent...))
+	xx.SetCol(1, df.FeatureScaling(memPercent...))
+	xx.SetCol(2, df.FeatureScaling(netRec...))
+	xx.SetCol(3, df.FeatureScaling(netSent...))
 
-//to get information about new instances pass them to the Predict function
-// to speed up computation use concurrent version of Predict
-// var newData [][]float64
-// newData = loadData("someNewInstances")
-// labels, scores := forest.Predict(newData)
+	//from 3xm to 2xm
+	k := 2
+	p := df.NewPCA(k)
+	tra, _ := p.FitTransform(xx.T())
+	//fmt.Printf("%0.4f", mat.Formatted(tra, mat.Prefix(""), mat.Squeeze()))
 
-// func ExampleIforest() {
+	//assign original scatter plot data
+	origScatt := &tfutil.ScatterData{}
+	xs, ys, zs := make([]float64, m), make([]float64, m), make([]float64, m)
+	for i := 0; i < m; i++ {
+		xs[i], ys[i] = tra.At(0, i), tra.At(1, i)
+	}
+	origScatt.Add("orig", xs, ys, zs)
 
-// 	// input data must be loaded into two dimensional array of the type float64
-// 	// please note: loadData() is some custom function - not included in the
-// 	// library
-// 	var inputData [][]float64
-// 	inputData = loadData("filename")
+	//model initialization
+	forest := iforest.NewForest(
+		iforest.AnomalyRatio(0.0001),
+		iforest.NbTrees(100),
+		iforest.SubsamplingSize(256))
 
-// 	// input parameters
-// 	treesNumber := 100
-// 	subsampleSize := 256
-// 	outliersRatio := 0.01
-// 	routinesNumber := 10
+	//training and testing stage - creating trees, finding anomalies
+	// forest.Train(xx.T())
+	// forest.Test(xx.T())
+	forest.Train(xx.T())
+	forest.Test(xx.T())
 
-// 	//model initialization
-// 	forest := iforest.NewForest(treesNumber, subsampleSize, outliers)
+	// scores := make([]float64, len(forest.AnomalyScores))
+	// copy(scores, forest.AnomalyScores)
+	//  sorts given in descending order.
+	// sort.Slice(scores, func(i, j int) bool {
+	// 	return scores[i] > scores[j]
+	// })
+	// for i := 0; i < len(scores); i++ {
+	// 	if scores[i] < 0.75 {
+	// 		fmt.Println("score lager than 0.5 has:", i, " total:", m, "  AnomalyBound:", forest.AnomalyBound)
+	// 		break
+	// 	}
+	// }
+	labelsTest := forest.Labels
 
-// 	//training stage - creating trees
-// 	forest.Train(inputData)
+	//assign labeled scatter plot data
+	clusterScatt := &tfutil.ScatterData{}
+	for i := 0; i < m; i++ {
+		xs[i], ys[i], zs[i] = tra.At(0, i), tra.At(1, i), float64(labelsTest[i])
+	}
+	clusterScatt.Add("cluster", xs, ys, zs)
 
-// 	//testing stage - finding anomalies
-// 	//Test or TestParaller can be used, concurrent version needs one additional
-// 	// parameter
-// 	forest.Test(inputData)
-// 	forest.TestParallel(inputData, routinesNumber)
+	tfutil.SaveScatters(filename, origScatt, clusterScatt)
 
-// 	//after testing it is possible to access anomaly scores, anomaly bound
-// 	// and labels for the input dataset
-// 	threshold := forest.AnomalyBound
-// 	anomalyScores := forest.AnomalyScores
-// 	labelsTest := forest.Labels
+	tfutil.SaveBoxPlot("box-"+filename, forest.AnomalyScores)
 
-// 	//to get information about new instances pass them to the Predict function
-// 	// to speed up computation use concurrent version of Predict
-// 	var newData [][]float64
-// 	newData = loadData("someNewInstances")
-// 	labels, scores := forest.Predict(newData)
-
-// }
+	tfutil.SaveHistograms("hist-"+filename, forest.AnomalyScores)
+	fmt.Println("")
+	//output:
+	//
+}

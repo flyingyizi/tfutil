@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 
 	"gonum.org/v1/gonum/floats"
 	"gonum.org/v1/gonum/stat"
@@ -47,14 +48,16 @@ func CsvToArray(filename string) (r, c int, out []float64) {
 			break
 		} else if err != nil {
 			fmt.Println("Error:", err)
-			return
+			//skip the err record
+			continue
 		}
 		data = append(data, record...)
 	}
 
 	total, out := len(data), make([]float64, len(data))
 	for i := 0; i < total; i++ {
-		if value, err := strconv.ParseFloat(data[i], 64); err == nil {
+		d := strings.TrimSpace(data[i])
+		if value, err := strconv.ParseFloat(d, 64); err == nil {
 			out[i] = value
 		} else {
 			return

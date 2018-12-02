@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"gonum.org/v1/gonum/mat"
+	"gonum.org/v1/gonum/stat/distuv"
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/palette/moreland"
 	"gonum.org/v1/plot/plotter"
@@ -68,56 +69,6 @@ func (s *ScatterData) Clear() {
 		delete(s.XYZsList, k)
 	}
 	return
-}
-
-//SaveScatter  save scatter data to png file named outfileName
-func SaveScatter(outfileName string, xys *ScatterData, thetas ...float64) {
-	// Create a new plot, set its title and
-	// axis labels.
-	p, err := plot.New()
-	if err != nil {
-		panic(err)
-	}
-	p.Title.Text = outfileName
-	p.X.Label.Text = "X"
-	p.Y.Label.Text = "Y"
-	// Draw a grid behind the data
-	p.Add(plotter.NewGrid())
-
-	for name, sdata := range xys.XYZsList {
-		// Make a scatter plotter and set its style.
-		s, err := plotter.NewScatter(sdata)
-		if err != nil {
-			panic(err)
-		}
-
-		p.Add(s)
-		p.Legend.Add(fmt.Sprint("", name), s)
-	}
-
-	parms := len(thetas)
-	if parms >= 1 {
-		// make a hyA quadratic function
-		h := plotter.NewFunction(func(x float64) float64 {
-			if parms == 1 {
-				return (thetas[0])
-			} else if parms == 2 {
-				return (thetas[0] + thetas[1]*x)
-			} else {
-				return -(thetas[0] + thetas[1]*x) / thetas[2]
-			}
-		})
-		h.Color = color.RGBA{B: 255, A: 255}
-		p.Add(h)
-		// Add the plotters to the plot, with a legend
-		// entry for each
-		p.Legend.Add("hypothesis", h)
-	}
-
-	// Save the plot to a PNG file.
-	if err := p.Save(4*vg.Inch, 4*vg.Inch, outfileName+".png"); err != nil {
-		panic(err)
-	}
 }
 
 //SaveLine  save line ,the line's X is index of slice, the Y is item's value
@@ -387,7 +338,7 @@ func SaveScatterToImage(outfileName string, r, c int, data []float64) (err error
 	}
 	//p.Title.Text = "A Logo"
 
-	img, err := NewGray(r, c, data)
+	img, err := newGray(r, c, data)
 	if err != nil {
 		return
 	}
@@ -399,8 +350,8 @@ func SaveScatterToImage(outfileName string, r, c int, data []float64) (err error
 	return
 }
 
-// NewGray create a plotter image from scatter data
-func NewGray(r, c int, data []float64) (img *plotter.Image, err error) {
+// newGray create a plotter image from scatter data
+func newGray(r, c int, data []float64) (img *plotter.Image, err error) {
 	if r*c != len(data) {
 		err = errors.New("wrong scatter size")
 		return
@@ -425,4 +376,76 @@ func NewGray(r, c int, data []float64) (img *plotter.Image, err error) {
 	}
 	img = plotter.NewImage(pic, 0, 0, float64(r), float64(c))
 	return
+}
+
+func SaveBoxPlot(outfileName string, datas ...[]float64) {
+	// Create the plot and set its title and axis label.
+	p, err := plot.New()
+	if err != nil {
+		panic(err)
+	}
+	p.Title.Text = "Box plots"
+	p.Y.Label.Text = "Values"
+
+	// Make boxes for our data and add them to the plot.
+	locName := make([]string, 0)
+	w := vg.Points(40)
+	for loc, data := range datas {
+		values := make(plotter.Values, len(data))
+		for j := 0; j < len(data); j++ {
+			values[j] = data[j]
+		}
+		locName = append(locName, fmt.Sprintf("%v", loc))
+		b, err := plotter.NewBoxPlot(w, float64(loc), values)
+		if err != nil {
+			panic(err)
+		}
+		p.Add(b)
+	}
+
+	// Set the X axis of the plot to nominal with
+	// the given names for x=0, x=1 and x=2.
+	p.NominalX(locName...)
+
+	if err := p.Save(3*vg.Inch, 4*vg.Inch, outfileName+".png"); err != nil {
+		panic(err)
+	}
+}
+
+func SaveHistograms(outfileName string, data []float64) {
+	// Draw some random values from the standard
+	// normal distribution.
+	v := make(plotter.Values, len(data))
+	for i := 0; i < len(data); i++ {
+		v[i] = data[i]
+	}
+
+	// Make a plot and set its title.
+	p, err := plot.New()
+	if err != nil {
+		panic(err)
+	}
+	p.Title.Text = "Histogram"
+
+	// Create a histogram of our values drawn
+	// from the standard normal.
+	h, err := plotter.NewHist(v, 16)
+	if err != nil {
+		panic(err)
+	}
+	// Normalize the area under the histogram to
+	// sum to one.
+	h.Normalize(1)
+	p.Add(h)
+
+	// The normal distribution function
+	norm := plotter.NewFunction(distuv.UnitNormal.Prob)
+	norm.Color = color.RGBA{R: 255, A: 255}
+	norm.Width = vg.Points(2)
+	p.Add(norm)
+
+	// Save the plot to a PNG file.
+	if err := p.Save(4*vg.Inch, 4*vg.Inch, "hist-"+outfileName+".png"); err != nil {
+		panic(err)
+	}
 }
