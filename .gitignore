@@ -5,6 +5,8 @@
 *.so
 *.dylib
 launch.json
+*txt.png
+*txt.json
 
 # Test binary, build with `go test -c`
 *.test

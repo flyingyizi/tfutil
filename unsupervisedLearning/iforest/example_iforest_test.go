@@ -83,8 +83,7 @@ func ExampleForest_abcd() {
 	xx := mat.NewDense(m, 4, nil)
 	xx.SetCol(0, df.FeatureScaling(cpuPercent...))
 	xx.SetCol(1, df.FeatureScaling(memPercent...))
-	xx.SetCol(2, df.FeatureScaling(netRec...))
-	xx.SetCol(3, df.FeatureScaling(netSent...))
+	xx.SetCol(2, df.FeatureScaling(numc...))
 
 	//from 3xm to 2xm
 	k := 2
@@ -102,7 +101,7 @@ func ExampleForest_abcd() {
 
 	//model initialization
 	forest := iforest.NewForest(
-		iforest.AnomalyRatio(0.001),
+		iforest.AnomalyRatio(0.0001),
 		iforest.NbTrees(100),
 		iforest.SubsamplingSize(256))
 
@@ -146,7 +145,7 @@ func ExampleForest_abcd() {
 	tfutil.SaveBoxPlot("box-"+filename, forest.AnomalyScores)
 
 	tfutil.SaveHistograms("hist-"+filename, forest.AnomalyScores)
-	forest.Save("testdata\\saved.json")
+	forest.Save("testdata\\saved.txt.json")
 	fmt.Println("")
 	//output:
 	//

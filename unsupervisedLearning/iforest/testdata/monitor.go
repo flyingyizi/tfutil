@@ -11,6 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"gonum.org/v1/gonum/mat"
+
+	"github.com/flyingyizi/tfutil/unsupervisedLearning/iforest"
+
 	"github.com/shirou/gopsutil/cpu"
 
 	"github.com/shirou/gopsutil/mem"
@@ -32,10 +36,16 @@ Options:
 	flag.PrintDefaults()
 }
 
+type coll struct {
+	Str  *string
+	Data []float64
+}
+
 func main() {
 	//flag
-	filename := flag.String("file", "", "file stores the logs, default is outputing to terminal")
-	num := flag.Uint64("num", math.MaxUint64, "number of log record")
+	filename := flag.String("f", "", "file stores the logs, default is outputing to terminal")
+	num := flag.Uint64("n", math.MaxUint64, "number times of monitor/supervior")
+	supervior := flag.Bool("s", false, "supervior the machine with trained model")
 	interval := flag.Uint("interval", 250, "monitor interval,unit is milli-second")
 	flag.Usage = usage
 
@@ -47,7 +57,7 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	queue := make(chan *string, 100)
+	queue := make(chan coll, 100)
 
 	var w *bufio.Writer
 	if *filename != "" {
@@ -69,9 +79,20 @@ func main() {
 		defer f.Close()
 	}
 
+	//
+	var forest *iforest.Forest
+	if *supervior {
+		forest = iforest.NewForest()
+		if err := forest.Load("saved.txt.json"); err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Printf("load inforest trained model success, wit anomalBound:%v\n", forest.AnomalyBound)
+	}
+
 	//start log writing routine
 	wg.Add(1)
-	go writeFile(&wg, queue, w)
+	go writeFile(&wg, queue, w, forest)
 	wg.Add(1)
 	go producer(&wg, queue, c, *interval, *num)
 	//start
@@ -80,7 +101,7 @@ func main() {
 
 }
 
-func producer(wg *sync.WaitGroup, queue chan *string, quit chan os.Signal, interval uint, maxrecord uint64) {
+func producer(wg *sync.WaitGroup, queue chan coll, quit chan os.Signal, interval uint, maxrecord uint64) {
 
 	defer wg.Done()
 	var i uint64
@@ -94,13 +115,13 @@ func producer(wg *sync.WaitGroup, queue chan *string, quit chan os.Signal, inter
 		}
 
 		//
-		s, _ := collet()
-		queue <- s
-		i++
-		if i > maxrecord-1 {
+		if i > maxrecord {
 			break
 		}
+		s, d := collet()
+		queue <- coll{Str: s, Data: d}
 		time.Sleep(time.Duration(interval) * time.Millisecond)
+		i++
 	}
 ForEND:
 
@@ -108,9 +129,20 @@ ForEND:
 	//fmt.Println("producer | close channel, exit")
 }
 
-func writeFile(wg *sync.WaitGroup, queue chan *string, bufferedWriter *bufio.Writer) {
+func writeFile(wg *sync.WaitGroup, queue chan coll, bufferedWriter *bufio.Writer, forest *iforest.Forest) {
 	defer wg.Done()
-	for str := range queue {
+	for msg := range queue {
+		str, data := msg.Str, msg.Data
+
+		//do predict
+		if forest != nil {
+			label, score, err := predict(data[1:], forest)
+			if label == 1 && err == nil {
+				fmt.Printf("time:%v , score:%v\n", time.Unix(0, int64(data[0])), score)
+			}
+			continue
+		}
+		//do record log
 		if str != nil {
 			if bufferedWriter == nil {
 				fmt.Print(*str)
@@ -124,6 +156,17 @@ func writeFile(wg *sync.WaitGroup, queue chan *string, bufferedWriter *bufio.Wri
 		bufferedWriter.Flush()
 	}
 	//fmt.Println("Consumer | exit")
+}
+
+func predict(x []float64, forest *iforest.Forest) (label int, score float64, err error) {
+	a := mat.NewDense(len(x), 1, x)
+	labels, scores, e := forest.Predict(a)
+	if e == nil {
+		label, score = labels[0], scores[0]
+	} else {
+		err = e
+	}
+	return
 }
 
 func collet() (*string, []float64) {
