@@ -40,6 +40,7 @@ func ExampleKmeans() {
 	fmt.Println("")
 	//output:
 	//
+
 }
 
 func TestKmeans(t *testing.T) {

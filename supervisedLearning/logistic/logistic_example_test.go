@@ -82,6 +82,7 @@ func ExampleMultiClassClassification_ex3data1() {
 			break
 		}
 	}
+
 	//output:
 	//
 }
