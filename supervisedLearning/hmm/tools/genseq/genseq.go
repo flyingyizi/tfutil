@@ -1,23 +1,29 @@
 //给定模型λ=（A,B,Pi）,生成一个观测序列O
-//example tools\genseq>go run genseq.go
+//example
+// tools\genseq>go run genseq.go ../../t2.hmm
+// RandomSeed: 1547040208
+// {
+//         "T": 10,
+//         "O": [ 1,  0,  1, 0,  1, 0, 1, 0, 0, 1 ]
+// }
+
 package main
 
 import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/flyingyizi/tfutil/supervisedLearning/hmm"
 )
 
 func usage() {
-	// 	fmt.Fprintf(os.Stderr, `Usage error
-	// 	T = length of sequence
-	// 	S =  random number seed
-
-	// Options:
-	// `)
+	fmt.Fprintf(os.Stderr, `Usage: generate observation sequence based on λ=(A,B,Pi) defined by mod.hmm
+	[-S:T:o] <mod.hmm>  
+Options:
+`)
 	flag.PrintDefaults()
 }
 
@@ -26,16 +32,20 @@ func main() {
 	//flag
 	seed := flag.Int64("S", 0, "random numer `seed`")
 	T := flag.Int("T", 10, "`length` of observation sequence ")
+	output := flag.String("o", "", "`filename` of file to store the observation sequence ")
 	flag.Usage = usage
 
 	flag.Parse()
-	// if flag.NFlag() != 2 {
-	// 	flag.Usage()
-	// 	return
-	// }
+
+	args := flag.Args()
+
+	if len(args) != 1 {
+		flag.Usage()
+		return
+	}
 
 	/* read HMM file */
-	h.Load("../../testhmm.hmm")
+	h.Load(args[0])
 
 	// 	/* length of observation sequence, T */
 
@@ -50,5 +60,9 @@ func main() {
 	observisionSeq := hmm.OSeq{T: *T, O: Ou}
 	bData, _ := json.MarshalIndent(observisionSeq, "", "\t")
 	fmt.Println(string(bData))
-	observisionSeq.Save(fmt.Sprintf("../../test.%d.seq", *T))
+
+	if len(*output) != 0 {
+		observisionSeq.Save(*output)
+	}
+
 }

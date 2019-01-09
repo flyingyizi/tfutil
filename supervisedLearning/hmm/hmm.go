@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"math/rand"
 	"os"
+
+	"gonum.org/v1/gonum/floats"
+	"gonum.org/v1/gonum/mat"
 	//	. "github.com/flyingyizi/tfutil/logicregression"
 	//"gonum.org/v1/gonum/mat"
 )
@@ -47,7 +50,7 @@ func (phmm *HMM) Load(path string) error {
 	return err
 }
 
-// GenSequenceArray generate observation sequence from existing hmm  model
+// GenSequenceArray 从当前HMM模型生成一个观测序列，以及对应的隐藏序列
 //
 //T is length of observation sequence
 //O is the observation sequence O
@@ -128,38 +131,74 @@ func (phmm *HMM) genSymbol(qt int) int {
 	return ot
 }
 
-//todo
 //Forward  HMM前向算法
 // 解决HMM基本问题1：在给定模型λ=（A,B,Pi）与观测序列O。计算在给定模型λ下观测序列O出现的概率P(O|λ)
-func (phmm *HMM) Forward(O []int) (alpha [][]float64, pprob float64) {
+func (phmm *HMM) Forward(O []int) (pprob float64) {
 	T := len(O)
 
-	sum := 0.0 // double sum;     /* partial sum */
-
-	//alpha  shape is T x N  //alpha = dmatrix(1, T, 1, hmm.N)
-	alpha = Unflatten(T, phmm.N, make([]float64, T*phmm.N))
-	A := Unflatten(phmm.N, phmm.N, phmm.A)
-	B := Unflatten(phmm.N, phmm.M, phmm.B)
+	//alpha  shape is T x N
+	alpha := Unflatten(T, phmm.N, make([]float64, T*phmm.N))
+	A := mat.NewDense(phmm.N, phmm.N, phmm.A)
+	B := mat.NewDense(phmm.N, phmm.M, phmm.B)
 
 	/* 1. Initialization */
-	for i := 0; i < phmm.N; i++ {
-		alpha[0][i] = phmm.Pi[i] * B[i][O[0]] //联合概率
-	}
+	//assign alpha[0][..]
+	floats.MulTo(alpha[0],
+		phmm.Pi, mat.Col(nil, O[0], B)) //联合概率
+
 	/* 2. Induction */
-	for t := 1; t < T; t++ { /* time index */
+	for t := 0; t < T-1; t++ { /* time index */
+
 		for j := 0; j < phmm.N; j++ {
-			sum = 0.0
-			for i := 1; i <= phmm.N; i++ {
-				sum += alpha[t][i] * (A[i][j])
-			}
-			alpha[t+1][j] = sum * (B[j][O[t+1]])
+			//partial sum for *->j
+			sum := floats.Dot(alpha[t], mat.Col(nil, j, A))
+			alpha[t+1][j] = sum * (B.At(j, O[t+1]))
 		}
 	}
 
 	/* 3. Termination */
-	pprob = 0.0
-	for i := 1; i <= phmm.N; i++ {
-		pprob += alpha[T][i]
+	pprob = floats.Sum(alpha[T-1])
+
+	return
+}
+
+//Viterbi  维特比算法
+// 解决HMM基本问题2：对给定模型λ=（A,B,Pi）与观测序列O，计算观测序列O的隐隐马尔科夫状态的最短路径
+func (phmm *HMM) Viterbi(O []int) (pprob float64, q []int) {
+	T := len(O)
+	//	delta  shape is T x N
+	delta := mat.NewDense(T, phmm.N, nil)
+	//psi  shape is T x N
+	psi := mat.NewDense(T, phmm.N, nil)
+	//q len is T
+	q = make([]int, T)
+
+	A := mat.NewDense(phmm.N, phmm.N, phmm.A)
+	B := mat.NewDense(phmm.N, phmm.M, phmm.B)
+
+	// 1. Initialization    t==0
+	dst := make([]float64, phmm.N)
+	floats.MulTo(dst, phmm.Pi, mat.Col(nil, O[0], B)) //联合概率
+	delta.SetRow(0, dst)
+
+	/* 2. Recursion */
+	for t := 1; t < T; t++ { /* time index */
+		for j := 0; j < phmm.N; j++ {
+			floats.MulTo(dst, delta.RawRowView(t-1), mat.Col(nil, j, A))
+			maxIdx := floats.MaxIdx(dst)
+
+			delta.Set(t, j, dst[maxIdx]*(B.At(j, O[t])))
+			psi.Set(t, j, float64(maxIdx))
+		}
+	}
+
+	//  3. Termination
+	q[T-1] = floats.MaxIdx(delta.RawRowView(T - 1))
+	pprob = delta.At(T-1, q[T-1])
+
+	//  4. Path (state sequence) backtracking
+	for t := T - 2; t >= 0; t-- {
+		q[t] = int(psi.At(t+1, q[t+1]))
 	}
 	return
 }
