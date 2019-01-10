@@ -53,8 +53,7 @@ func main() {
 		*seed = time.Now().Unix()
 	}
 	fmt.Println("RandomSeed:", *seed)
-	// 	int	*O;	/* the observation sequence O[1..T]*/
-	// 	int	*q; 	/* the state sequence q[1..T] */
+
 	Ou, _ := h.GenSequenceArray(*seed, *T)
 
 	observisionSeq := hmm.OSeq{T: *T, O: Ou}

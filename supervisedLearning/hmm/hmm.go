@@ -136,34 +136,38 @@ func (phmm *HMM) genSymbol(qt int) int {
 func (phmm *HMM) Forward(O []int) (pprob float64) {
 	T := len(O)
 
+	dst := make([]float64, phmm.N)
 	//alpha  shape is T x N
-	alpha := Unflatten(T, phmm.N, make([]float64, T*phmm.N))
+	alpha := mat.NewDense(T, phmm.N, nil)
 	A := mat.NewDense(phmm.N, phmm.N, phmm.A)
 	B := mat.NewDense(phmm.N, phmm.M, phmm.B)
 
 	/* 1. Initialization */
-	//assign alpha[0][..]
-	floats.MulTo(alpha[0],
+	floats.MulTo(dst,
 		phmm.Pi, mat.Col(nil, O[0], B)) //联合概率
+	alpha.SetRow(0, dst)
 
 	/* 2. Induction */
 	for t := 0; t < T-1; t++ { /* time index */
 
 		for j := 0; j < phmm.N; j++ {
 			//partial sum for *->j
-			sum := floats.Dot(alpha[t], mat.Col(nil, j, A))
-			alpha[t+1][j] = sum * (B.At(j, O[t+1]))
+			sum := floats.Dot(alpha.RawRowView(t), mat.Col(nil, j, A))
+			alpha.Set(t+1, j, sum*(B.At(j, O[t+1])))
 		}
 	}
 
 	/* 3. Termination */
-	pprob = floats.Sum(alpha[T-1])
+	pprob = floats.Sum(alpha.RawRowView(T - 1))
 
 	return
 }
 
 //Viterbi  维特比算法
 // 解决HMM基本问题2：对给定模型λ=（A,B,Pi）与观测序列O，计算观测序列O的隐隐马尔科夫状态的最短路径
+//output:
+// q  输出路径, 长度为len(q) == len(O)
+// pprob
 func (phmm *HMM) Viterbi(O []int) (pprob float64, q []int) {
 	T := len(O)
 	//	delta  shape is T x N
@@ -184,17 +188,20 @@ func (phmm *HMM) Viterbi(O []int) (pprob float64, q []int) {
 	/* 2. Recursion */
 	for t := 1; t < T; t++ { /* time index */
 		for j := 0; j < phmm.N; j++ {
+			// *->j 状态中概率最大的
 			floats.MulTo(dst, delta.RawRowView(t-1), mat.Col(nil, j, A))
 			maxIdx := floats.MaxIdx(dst)
+			maxVal := dst[maxIdx]
 
-			delta.Set(t, j, dst[maxIdx]*(B.At(j, O[t])))
+			delta.Set(t, j, maxVal*(B.At(j, O[t])))
 			psi.Set(t, j, float64(maxIdx))
 		}
 	}
 
 	//  3. Termination
-	q[T-1] = floats.MaxIdx(delta.RawRowView(T - 1))
-	pprob = delta.At(T-1, q[T-1])
+	idx := floats.MaxIdx(delta.RawRowView(T - 1))
+	q[T-1] = idx
+	pprob = delta.At(T-1, idx)
 
 	//  4. Path (state sequence) backtracking
 	for t := T - 2; t >= 0; t-- {
@@ -203,32 +210,32 @@ func (phmm *HMM) Viterbi(O []int) (pprob float64, q []int) {
 	return
 }
 
-//Unflatten  unflatten one dimensional to two-dimensional array
-// with shape r by c
-func Unflatten(r, c int, d []float64) [][]float64 {
-	m := make([][]float64, r)
-	for i := 0; i < r; i++ {
-		m[i] = d[i*c : (i+1)*c]
-	}
-	return m
-}
+// //Unflatten  unflatten one dimensional to two-dimensional array
+// // with shape r by c
+// func Unflatten(r, c int, d []float64) [][]float64 {
+// 	m := make([][]float64, r)
+// 	for i := 0; i < r; i++ {
+// 		m[i] = d[i*c : (i+1)*c]
+// 	}
+// 	return m
+// }
 
-//Flatten flatten  two-dimensional array to one dimensional
-func Flatten(f [][]float64) (r, c int, d []float64) {
-	r = len(f)
-	if r == 0 {
-		panic("bad test: no row")
-	}
-	c = len(f[0])
-	d = make([]float64, 0, r*c)
-	for _, row := range f {
-		if len(row) != c {
-			panic("bad test: ragged input")
-		}
-		d = append(d, row...)
-	}
-	return r, c, d
-}
+// //Flatten flatten  two-dimensional array to one dimensional
+// func Flatten(f [][]float64) (r, c int, d []float64) {
+// 	r = len(f)
+// 	if r == 0 {
+// 		panic("bad test: no row")
+// 	}
+// 	c = len(f[0])
+// 	d = make([]float64, 0, r*c)
+// 	for _, row := range f {
+// 		if len(row) != c {
+// 			panic("bad test: ragged input")
+// 		}
+// 		d = append(d, row...)
+// 	}
+// 	return r, c, d
+// }
 
 //OSeq .. observation  sequence
 type OSeq struct {
