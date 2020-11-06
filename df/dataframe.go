@@ -81,14 +81,14 @@ func FeatureScalingMatrix(m mat.Matrix) *mat.Dense {
 	}
 
 	var t mat.Dense
-	t.Clone(m.T())
+	t.CloneFrom(m.T())
 
 	tr, _ := t.Dims()
 	for i := 0; i < tr; i++ {
 		t.SetRow(i, FeatureScaling(t.RawRowView(i)...))
 	}
 	var o mat.Dense
-	o.Clone(t.T())
+	o.CloneFrom(t.T())
 
 	return &o
 }
@@ -127,7 +127,7 @@ func HorizJoinDense(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
 	}
 
 	var x mat.Dense
-	x.Clone(a)
+	x.CloneFrom(a)
 
 	//help function
 	getColOfb := func(b mat.Matrix, j int) []float64 {
@@ -181,7 +181,7 @@ func VerticalJoinDense(a mat.Matrix, bs ...mat.Matrix) (dest *mat.Dense) {
 	}
 
 	var x mat.Dense
-	x.Clone(a)
+	x.CloneFrom(a)
 
 	var (
 		poi *mat.Dense
